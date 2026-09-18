@@ -1,0 +1,78 @@
+# Under each parent programmable block, define a list of unique MUX modules
+# Note that this file will be automatically generated later
+grid_clb:
+  - "pb_mux_size2"
+  - "pb_mux_size52"
+sb_0_: 
+  - "sb_mux_size2"
+  - "sb_mux_size3"
+sb_1_: 
+  - "sb_mux_size2"
+  - "sb_mux_size3"
+  - "sb_mux_size4"
+  - "sb_mux_size5"
+  - "sb_mux_size6"
+  - "sb_mux_size7"
+  - "sb_mux_size8"
+  - "sb_mux_size9"
+sb_2_: 
+  - "sb_mux_size2"
+  - "sb_mux_size3"
+  - "sb_mux_size7"
+sb_3_: 
+  - "sb_mux_size2"
+  - "sb_mux_size3"
+  - "sb_mux_size4"
+  - "sb_mux_size5"
+  - "sb_mux_size6"
+  - "sb_mux_size7"
+sb_4_: 
+  - "sb_mux_size9"
+  - "sb_mux_size11"
+  - "sb_mux_size13"
+sb_5_: 
+  - "sb_mux_size2"
+  - "sb_mux_size3"
+  - "sb_mux_size4"
+  - "sb_mux_size5"
+  - "sb_mux_size15"
+  - "sb_mux_size16"
+  - "sb_mux_size17"
+  - "sb_mux_size18"
+  - "sb_mux_size19"
+  - "sb_mux_size20"
+  - "sb_mux_size27"
+sb_6_: 
+  - "sb_mux_size2"
+  - "sb_mux_size4"
+sb_7_: 
+  - "sb_mux_size2"
+  - "sb_mux_size3"
+  - "sb_mux_size4"
+  - "sb_mux_size5"
+  - "sb_mux_size9"
+  - "sb_mux_size10"
+  - "sb_mux_size11"
+  - "sb_mux_size12"
+  - "sb_mux_size15"
+sb_8_: 
+  - "sb_mux_size2"
+  - "sb_mux_size3"
+  - "sb_mux_size4"
+  - "sb_mux_size7"
+cbx_0_: 
+  - "cb_mux_size8"
+cbx_1_: 
+  - "cb_mux_size6"
+  - "cb_mux_size8"
+cbx_2_: 
+  - "cb_mux_size6"
+  - "cb_mux_size8"
+cby_0_: 
+  - "cb_mux_size8"
+cby_1_: 
+  - "cb_mux_size6"
+cby_2_: 
+  - "cb_mux_size6"
+  - "cb_mux_size8"
+
