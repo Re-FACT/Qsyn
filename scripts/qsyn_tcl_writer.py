@@ -17,7 +17,7 @@ GET_LIB_CELLS = "get_lib_cells"
 
 
 # Class of A general purpose Design Compiler Tcl writer
-class DcTclWriter:
+class QsynTclWriter:
     def __init__(self):
         # constants
         self.__VERILOG_NETLIST_FILES_VAR_NAME_ = "VERILOG_NETLIST_FILES"

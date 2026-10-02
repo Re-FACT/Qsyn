@@ -54,15 +54,11 @@ TASKS_SUBBLOCKS_RENAME_PREFIX_TAG = "rename_prefix"
 CURRENT_DESIGN_KEYWORD = "[current_design]"
 
 DEVICE_DATA_MAP = {
-    "t22ulp": "etc/device_data/t22ulp_constants.yml",
-    "s40ulp": "etc/device_data/s40ulp_constants.yml",
-    "s40ll": "etc/device_data/s40ll_constants.yml",
-    "t22ull": "etc/device_data/t22ull_constants.yml",
+    "sky130": "etc/device_data/sky130_constants.yml",
 }
 
-
-# Class of a PTPX task manager
-class DcTaskManager:
+# Class of a Qsyn task manager
+class QsynTaskManager:
     def __init__(self):
         # Internal data
         self.__db_ = {}

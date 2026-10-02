@@ -16,7 +16,7 @@ SPACE_LIMIT = 80  # Maximum space tuned for the screen width
 
 
 # Class of a DC job run manager
-class DcJobManager:
+class QsynJobManager:
     def __init__(self):
         # Internal data
         self.__new_thread_wait_time_ = 1  # [sec.] Give a wait time before starting the next thread. Avoid any conflicts in switching directories

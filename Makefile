@@ -20,15 +20,6 @@ export COMMENT_EXTRACT
 help:
 	@${PYTHON_EXEC} -c "$$COMMENT_EXTRACT"
 
-help_old:
-# Show how-to-use for old scripts (to be deprecated)
-	${PYTHON_EXEC} scripts/run_dc_synth.py --help
-
-test_old:
-# Show how to run regression tests for old scripts (to be deprecated)
-	cd tests
-	make test_all
-
 update_version:
 # Update the patch count in the version number
 	echo "======== Bump up patch count in the version number ========"; \

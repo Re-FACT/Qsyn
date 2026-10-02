@@ -31,7 +31,7 @@ CURRENT_FILETYPE_KEYWORD = "[current_file_type]"
 
 
 # Class of a Design Compiler device manager
-class DcDeviceManager:
+class QsynDeviceManager:
     def __init__(self):
         # Internal data
         self.__pdk_root_ = ""
