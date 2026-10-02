@@ -3,9 +3,9 @@
 Task File (.yaml)
 =================
 
-- The task file aims to provide a standard way for users to create a DC task run. 
-- The task file is the key input file for users to craft, before running a DC task.
-- The task file contains essential information required to set up DC scripts.
+- The task file aims to provide a standard way for users to create a synthesis task run. 
+- The task file is the key input file for users to craft, before running a synthesis task.
+- The task file contains essential information required to set up synthesis scripts.
 
 An example of file designed for synthesis tasks is shown as follows.
 
@@ -112,7 +112,7 @@ Each task should constain the following information.
 
 .. option:: compile="<string>"
 
-  Specify options when compile the design using DC
+  Specify options when compile the design using synthesis tools 
 
   .. note:: When not specified, this is an analyze flow!
 
