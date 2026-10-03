@@ -5,7 +5,7 @@ VERSION_FILE = VERSION.md
 TAGGED_COMMIT_FILE = .TAGGED_COMMIT
 VERSION_BUMP_TYPE = minor
 FORCE_COMMIT_VERSION_UPDATE = off
-INFRA_ROOT = /eda/internal/alkaid_infra/
+INFRA_ROOT = ${PWD}/utils/refact_infra/
 NUM_JOBS = 2
 
 # Format executables
@@ -40,6 +40,10 @@ format-py:
 	do \
 	${PYTHON_FORMAT_EXEC} $${f} --line-length 100 || exit 1; \
 	done
+
+check-format-py:
+# Check if all the python files are in the expected format
+	${INFRA_ROOT}/scripts/check-format.sh -py
 
 quick_test:
 # Run quick tests (only file generate, no ptpx run)
