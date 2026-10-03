@@ -57,6 +57,7 @@ DEVICE_DATA_MAP = {
     "sky130": "etc/device_data/sky130_constants.yml",
 }
 
+
 # Class of a Qsyn task manager
 class QsynTaskManager:
     def __init__(self):

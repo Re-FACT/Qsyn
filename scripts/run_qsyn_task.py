@@ -361,7 +361,9 @@ if __name__ == "__main__":
         help="Specify the names of synthesis tasks to be executed. This allows users to select one or a number of tasks to be run. Use comma as a splitter, e.g., task1,task2,task3. By default, run all the listed tasks.",
     )
     parser.add_argument(
-        "--qsyn_rundir", default="_snps_qsyn", help="The runtime directory to execute synthesis task"
+        "--qsyn_rundir",
+        default="_snps_qsyn",
+        help="The runtime directory to execute synthesis task",
     )
 
     parser.add_argument(
