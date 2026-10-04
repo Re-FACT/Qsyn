@@ -3,12 +3,19 @@
 # pargs are the positional arguments which must appear in a fixed location of command line options 
 # options are the command-line options required to run a specific type of task. The keywords in brackets [] are replaced by the corresponding content from task configuraiton file 
 # Take the example below, the 'gds_dummy' task will invoke a tool run through the following command line:
-#   yosys -drc -hier -turbo 16 -64 run.tcl
+#   yosys run.tcl -l run.log
 # Where in the task configuration file,
 #   - the '[tcl]' is defined through the syntax 'tcl' 
 #   - the '[max_cores]' is defined through the syntax 'max_cores'
 yosys:
   bin: yosys
-  options: "pargs"
-    pargs:
-      - name: "[tcl]"
+  options: "pargs kargs"
+  pargs:
+    - name: "[tcl]"
+#  kargs:
+#    - name: "-l [log]"
+snps_dc:
+  bin: dc_shell
+  options: "kargs"
+  kargs:
+    - name: "-f [tcl]" 
