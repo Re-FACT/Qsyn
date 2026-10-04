@@ -35,9 +35,9 @@ import sphinxcontrib.rsvgconverter
 
 # -- Project information -----------------------------------------------------
 
-project = u'DcUtil'
-copyright = u'2022 RapidFlex'
-author = u'RapidFlex'
+project = u'Qsyn'
+copyright = u'2026 ReFACT'
+author = u'ReFACT'
 
 # The short X.Y version
 with open("VERSION.md") as ver_f:
@@ -177,7 +177,7 @@ def setup(app):
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'DcUtildoc'
+htmlhelp_basename = 'Qsyndoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -204,8 +204,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'dcutil.tex', u'DC Utility Documentation',
-     u'RapidFlex', 'manual'),
+    (master_doc, 'qsyn.tex', u'Qsyn Documentation',
+     u'ReFACT', 'manual'),
 ]
 
 
@@ -214,7 +214,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'dcutil', u'DC Utility Documentation',
+    (master_doc, 'qsyn', u'Qsyn Documentation',
      [author], 1)
 ]
 
@@ -225,8 +225,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'dcutil', u'DC Util Documentation',
-     author, 'RapidFlex', 'RapidFlex Software',
+    (master_doc, 'qsyn', u'Qsyn Documentation',
+     author, 'ReFACT', 'ReFACT Software',
      'Miscellaneous'),
 ]
 

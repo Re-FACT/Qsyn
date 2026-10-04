@@ -10,7 +10,7 @@ AREA_TAGS = [TOTAL_CELL_AREA_TAG, NUM_CELLS_TAG]
 
 
 # Class of a DC report manager
-class DcReportManager:
+class QsynReportManager:
     def __init__(self):
         # Internal data
         self.__dc_design_names_ = []

@@ -1,7 +1,6 @@
 name: Code Format
 
 # Run CI on push, PR, and weekly.
-
 on:
   push:
     branches:
@@ -12,11 +11,15 @@ on:
   schedule:
     - cron: "0 0 * * 0 " # weekly
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Multiple job to tests
 jobs:
   change_detect:
     name: "Check"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -24,15 +27,16 @@ jobs:
           - name: "Python"
             code_type: "-py"
     steps:
-      - name: Cancel previous
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ github.token }}
-
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: false
+
+      - name: Checkout infra
+        uses: actions/checkout@v4
+        with:
+          repository: Re-FACT/refact_infra
+          path: utils/refact_infra
 
       - name: Install dependencies
         run: |
@@ -43,4 +47,4 @@ jobs:
           black --version
 
       - name: Check format
-        run: ./etc/dev/check-format.sh ${{ matrix.config.code_type }}
+        run: make check-format${{ matrix.config.code_type }} INFRA_ROOT=utils/refact_infra

@@ -3,13 +3,13 @@
 User Interface
 --------------
 
-The script has a command-line user interface which allows users to customize their DC jobs.
+The script has a command-line user interface which allows users to customize their synthesis jobs.
 
 A short version of command-line options can be shown by calling the help desk through
 
 .. code-block:: yaml
 
-  python3 scripts/run_dc_task.py --help 
+  python3 scripts/run_qsyn_task.py --help 
 
 
 .. option:: --help
@@ -22,7 +22,7 @@ A short version of command-line options can be shown by calling the help desk th
 
 .. option:: --config <string>
 
-  Specify the task configuration file to perform DC jobs. See file format in `:ref:file_format_task_file` 
+  Specify the task configuration file to perform netlist synthesis jobs. See file format in `:ref:file_format_task_file` 
 
 .. option:: --root_directory <string>
 
@@ -52,7 +52,7 @@ A short version of command-line options can be shown by calling the help desk th
 
 .. option:: --dc_rundir <string>
 
-  Specify the name of runtime directory where DC runs will be executed
+  Specify the name of runtime directory where synthesis runs will be executed
 
 .. option:: -j <int> or --jobs <int>
 

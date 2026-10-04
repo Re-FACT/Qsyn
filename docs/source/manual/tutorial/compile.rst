@@ -6,7 +6,7 @@ How to Compile
 Supported Operating Systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-DC Utility is built for Linux system only with EDA tools
+Qsyn is built for Linux system only with EDA tools
 
 - Ubuntu
 - CentOS
@@ -17,7 +17,7 @@ It might work with earlier versions and other distributions.
 Build Steps
 ~~~~~~~~~~~
 
-Utility script require no build steps.
+Qsyn script require no build steps.
 
 Dependencies
 ~~~~~~~~~~~~
