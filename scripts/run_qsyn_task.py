@@ -382,15 +382,8 @@ if __name__ == "__main__":
 
     # Read device data based on the selection in task configuration
     device_mgr = qsyn_device_manager.QsynDeviceManager()
-    use_custom_pdk = False
-    if args.custom_pdk:
-        use_custom_pdk = True
-        logging.info("Use the custom PDK settings provided by users")
-        device_mgr.load(args.custom_pdk)
-    else:
-        logging.info("Use the built-in PDK settings")
-        device_data_file = task_mgr.technology_data_file(args.root_directory)
-        device_mgr.load(device_data_file)
+    logging.info("Loading the PDK settings provided by users")
+    device_mgr.load(args.custom_pdk)
 
     # Load mux modules if provided
     mux_module_mgr = mux_module_manager.MuxModuleManager()
