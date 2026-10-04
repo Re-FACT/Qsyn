@@ -316,11 +316,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a synthesis task for netlist synthesis")
     parser.add_argument("--config", required=True, help="The task configuration file")
     parser.add_argument(
-        "--list_sc_lib",
-        action="store_true",
-        help="List all the available standard cell libraries in the selected PDK of task configuration file. When enabled, no task will be executed except showing a list",
-    )
-    parser.add_argument(
         "--mux_modules",
         default=None,
         help="The YAML file contains definition for unique MUX modules under each programmable blocks",
@@ -341,9 +336,9 @@ if __name__ == "__main__":
         help="The root directory to search pdk, netlists etc. which are required by the task",
     )
     parser.add_argument(
-        "--custom_pdk",
-        default="",
-        help="The PDK configuration for a custom PDK. Once defined, the pdk setting in your task configuration will be overwritten except the corner selection.",
+        "--pdk_config",
+        required=True,
+        help="The PDK configuration for a PDK. Once defined, the pdk setting in your task configuration will be overwritten except the corner selection.",
     )
     parser.add_argument(
         "--file_generation_only",
@@ -405,12 +400,6 @@ if __name__ == "__main__":
     config_mem_mgr = config_mem_manager.ConfigMemManager()
     if args.config_mem_instances:
         config_mem_mgr.load(args.config_mem_instances)
-
-    # Show list if selected
-    if args.list_sc_lib:
-        logging.info(f"Selected PDK: {task_mgr.technology_name()}")
-        device_mgr.list_sc_lib()
-        exit(error_codes["SUCCESS"])
 
     job_mgr = qsyn_job_manager.QsynJobManager()
     job_mgr.set_runtime_dir_prefix(args.qsyn_rundir)
