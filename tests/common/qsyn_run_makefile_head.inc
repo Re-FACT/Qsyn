@@ -10,7 +10,5 @@ NUM_JOBS = 2
 
 # Put it first so that "make" without argument is like "make help".
 export COMMENT_EXTRACT
-
 help:
 	@${PYTHON_EXEC} -c "$$COMMENT_EXTRACT"
-

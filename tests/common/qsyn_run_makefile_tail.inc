@@ -1,7 +1,3 @@
-clean:
-# Remove all the previous run
-	rm -rf ${QSYN_RUN_DIR}* reports/*
-
 # Functions to extract comments from Makefiles
 define COMMENT_EXTRACT
 import re

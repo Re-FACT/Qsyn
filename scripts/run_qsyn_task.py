@@ -51,13 +51,13 @@ def find_current_task_is_selected(curr_task_name, task_names):
 
 
 #####################################################################
-# Generate the tcl script for a DC task
+# Generate the tcl script for a synthesis task
 def generate_qsyn_tcl_filename(tcldir):
     return os.path.join(os.path.abspath(tcldir), QSYN_TCL_FNAME)
 
 
 #####################################################################
-# Generate the common parts of tcl script for a DC task which can fit multiple purpose:
+# Generate the common parts of tcl script for a synthesis task which can fit multiple purpose:
 # - load design
 # - load pdk
 #####################################################################
@@ -147,7 +147,7 @@ def process_subblocks_depends(task_id):
 
 
 #####################################################################
-# Generate the tcl script for a DC task for report timing purpose
+# Generate the tcl script for a synthesis task for report timing purpose
 #####################################################################
 def generate_qsyn_tcl_file(
     tclfname,
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--parse_report_only",
         action="store_true",
-        help="Only parse the reports and generate a report summary, skip file generation and running DC",
+        help="Only parse the reports and generate a report summary, skip file generation and running synthesis",
     )
     parser.add_argument(
         "--tasks",
@@ -357,7 +357,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--qsyn_rundir",
-        default="_snps_qsyn",
+        default="_qsyn",
         help="The runtime directory to execute synthesis task",
     )
 
@@ -447,9 +447,9 @@ if __name__ == "__main__":
             if task_mgr.synth_task_report_power(synth_task_id):
                 rpt_dir.append(task_mgr.synth_task_report_power_file(synth_task_id, curr_design_id))
 
-    # Run DC and check errors
+    # Run synthesis and check errors
     if args.file_generation_only or args.parse_report_only:
-        logging.info("User selects to skip running DC.")
+        logging.info("User selects to skip running synthesis.")
     else:
         # Create report directories so that primetime do not stop on the error
         for rdir in rpt_dir:
@@ -457,20 +457,20 @@ if __name__ == "__main__":
         job_mgr.run_dc_all(args.jobs, True)
         num_errors += job_mgr.num_errors()
         if num_errors:
-            logging.info(f"DC job finished with {num_errors} errors")
+            logging.info(f"Synthesis job finished with {num_errors} errors")
         else:
-            logging.info(f"DC job finished successfully")
+            logging.info(f"Synthesis job finished successfully")
 
     if args.parse_report_only:
-        # Read DC reports and generate final report
-        logging.info(f"Generating DC report summary...")
+        # Read reports and generate final report
+        logging.info(f"Generating Qsyn report summary...")
         rpt_mgr.write_report_summary(args.report_summary)
         logging.info(f"Done")
 
     end_time = time.time()
     time_diff = timedelta(seconds=(end_time - start_time))
 
-    time_str = "Running Design Compiler flow took " + str(time_diff)
+    time_str = "Running synthesis flow took " + str(time_diff)
     logging.info(time_str)
 
     if num_errors == 0:

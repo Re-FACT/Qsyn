@@ -1,0 +1,86 @@
+# General settings, including device and pdk information
+technology:
+  name: sky130
+  root: "etc/pdk/sky130/std_cell"
+  corner: tt_100C_1v80 
+  
+netlist:
+  input: "./release/dp/"
+  exclude:
+    - "fabric_netlists.v"
+# If there is any hard macro, use the link path
+#  link_path:
+#     - "./release/dp/reg128.db"
+  output: "./post_synth_netlist"
+
+# Select the synthesis tool. Support yosys and design compiler
+synth_tool:
+  name: yosys
+  optimization_recipe: ys_opt.ys
+
+common_sdc:
+  - "./sdc/test1.tcl"
+  - "./sdc/test2.tcl"
+
+synth_tasks: 
+  - name: grid_io # Synthesis task description which can be applied to a number of modules. Serve as a unified synthesis recipe which is applicable to a wide range of modules.
+    current_design:
+      - grid_io_topL_top
+      - grid_io_topL
+    flatten: true
+    compile:
+      tool: yosys
+      # The custom optimization recipe to run synthesis
+      optimization_recipe: ys_opt.ys
+    target_library: 
+      - "hd" 
+    reports:  
+      # Yosys only support report area and 
+      - name: area
+        type: area_report # This report will be parsed and summary will be extracted
+        path: "./reports/[current_design]_area.rpt" 
+        # [current_path] will be replaced by the value of the path, [current_target_lib] will be replaced by the target_library
+        command:
+          - "tee -o [current_path] stat -liberty [current_target_lib]"
+    # All the subblocks should be synthesis before running the current blocks
+    subblocks:
+      - name: pi
+        pattern: logical_tile_io_pi_mode_io_pi_
+        flatten: false
+        depends:
+          - pi_ff
+        compile:
+          tool: yosys
+          # The custom optimization recipe to run synthesis
+          optimization_recipe: ys_opt.ys
+        rename_prefix: true
+      - name: po
+        pattern: logical_tile_io_po_mode_io_po_
+        flatten: false
+        depends:
+          - po_ff
+        compile:
+          tool: yosys
+          # The custom optimization recipe to run synthesis
+          optimization_recipe: ys_opt.ys
+        rename_prefix: true
+      - name: pi_ff
+        pattern: logical_tile_io_pi_mode_physical__iopad_mode_default__ff
+        flatten: false
+        compile:
+          tool: yosys
+          # The custom optimization recipe to run synthesis
+          optimization_recipe: ys_opt.ys
+        rename_prefix: true
+      - name: po_ff
+        pattern: logical_tile_io_po_mode_physical__iopad_mode_default__ff
+        flatten: false
+        rename_prefix: true
+      - name: config_mem
+        pattern: [from_config_mem]
+        flatten: false
+        compile:
+          tool: yosys
+          # The custom optimization recipe to run synthesis
+          optimization_recipe: ys_opt.ys
+        rename_prefix: false
