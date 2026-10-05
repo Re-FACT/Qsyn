@@ -76,10 +76,6 @@ class QsynTaskManager:
         self.__check_valid()
         return self.__db_[TECH_TAG][TECH_NAME_TAG]
 
-    def technology_data_file(self, root_dir):
-        self.__check_valid()
-        return os.path.join(root_dir, DEVICE_DATA_MAP[self.__db_[TECH_TAG][TECH_NAME_TAG]])
-
     # get the selected device root dirctory
     def technology_root(self):
         self.__check_valid()
