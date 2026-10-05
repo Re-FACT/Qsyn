@@ -1,0 +1,7 @@
+reg_tasks:
+  - name: "quick_test_file_gen_only"
+    workspace: "tests/tasks/quick_test_sky130"
+    command: "make generate_script_only"
+  - name: "quick_test_synth"
+    workspace: "tests/tasks/quick_test_sky130"
+    command: "make synth"
