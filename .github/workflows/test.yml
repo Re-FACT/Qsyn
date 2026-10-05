@@ -1,0 +1,43 @@
+name: Test
+
+# Only run for pull requests as we care contribution to the main
+# - There are changes in RTL files
+on:
+  pull_request:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  quick_test:
+    name: Quick tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install OSS CAD Suite (includes Yosys)
+        uses: YosysHQ/setup-oss-cad-suite@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }} # Optional: prevents public API rate limits
+          
+      - name: Verify Yosys Installation
+        run: yosys --version
+
+      - name: Download sky130 PDK
+        uses: robinraju/release-downloader@v1
+        with:
+          tag: "v0.0.0"
+          fileName: "sky130_std_cells.tar.gz"
+          out-file-path: "etc/pdk/sky130"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Unpack sky130 PDK
+        run: |
+          cd etc/pdk/sky130
+          tar -xzvf sky130_std_cells.tar.gz
+
+      - name: Running test
+        shell: bash
+        run: |
+          make quick_test
