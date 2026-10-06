@@ -8,7 +8,7 @@ include ../../common/qsyn_run_makefile_head.inc
 # Start your own targets here 
 unzip_netlist:
 # Uncompress golden netlist for synthesis
-	tar -zxvf release.tar.gz
+	tar -zxvf netlist.tar.gz
 
 synth: unzip_netlist
 # Run a flow to complete all the synthesis tasks defined in the configuration file
