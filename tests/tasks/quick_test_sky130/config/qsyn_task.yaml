@@ -13,11 +13,6 @@ netlist:
 #     - "./release/dp/reg128.db"
   output: "./post_synth_netlist"
 
-# Select the synthesis tool. Support yosys and design compiler
-synth_tool:
-  name: yosys
-  optimization_recipe: ys_opt.ys
-
 common_sdc:
   - "./sdc/test1.tcl"
   - "./sdc/test2.tcl"
@@ -31,6 +26,7 @@ synth_tasks:
     compile:
       tool: yosys
       # The custom optimization recipe to run synthesis
+      # If not provided, no optimization is applied. The flow is for analyzing only
       optimization_recipe: ys_opt.ys
     target_library: 
       - "hd" 
