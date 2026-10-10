@@ -187,7 +187,7 @@ def generate_qsyn_tcl_file(
             if not curr_target_sc_lib:
                 raise Exception(f"Invalid standard cell library name '{sc_lib_tag}'")
             target_sc_libs.append(curr_target_sc_lib)
-        tcl_writer.add_appvar("target_library", '"' + " ".join(target_sc_libs) + '"')
+        tcl_write.set_target_libs(target_sc_libs)
 
     # Add variables for micro floorplan synth
     design_name = task_mgr.synth_task_current_design(task_id, design_id)

@@ -11,8 +11,6 @@ KARGS_TAG = "kargs"
 KARGS_NAME_TAG = "name"
 
 # Constants
-# Support tools
-SUPPORTED_TOOLS = ["yosys", "snps_dc"]
 # Keywords
 TCL_KEYWORD = "[tcl]"
 
@@ -123,11 +121,6 @@ class QsynToolManager:
                 self.__db_ = yaml.load(stream, Loader=yaml.FullLoader)
             except yaml.YAMLError as exc:
                 logging.error(exc)
-        # Check All the tools are valid or not
-        for curr_tool in self.__db_.keys():
-            if curr_tool not in SUPPORTED_TOOLS:
-                raise Exception(f"Tool '{curr_tool}' is not in the list of supported tools.\nExpect: {SUPPORTED_TOOLS}\n")
-                
         # TODO: May need a validator before flip the flag!
         self.__is_dirty_ = False
 
