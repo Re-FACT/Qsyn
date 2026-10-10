@@ -12,6 +12,7 @@ from datetime import timedelta
 from datetime import datetime
 from xml.dom import minidom
 import qsyn_tcl_writer
+import qsyn_tool_manager
 import qsyn_task_manager
 import qsyn_device_manager
 import qsyn_job_manager
@@ -54,7 +55,6 @@ def find_current_task_is_selected(curr_task_name, task_names):
 # Generate the tcl script for a synthesis task
 def generate_qsyn_tcl_filename(tcldir):
     return os.path.join(os.path.abspath(tcldir), QSYN_TCL_FNAME)
-
 
 #####################################################################
 # Generate the common parts of tcl script for a synthesis task which can fit multiple purpose:
@@ -152,6 +152,7 @@ def process_subblocks_depends(task_id):
 def generate_qsyn_tcl_file(
     tclfname,
     use_custom_pdk,
+    selected_syn_tool,
     task_mgr,
     device_mgr,
     task_id,
@@ -167,6 +168,7 @@ def generate_qsyn_tcl_file(
     logging.info("Writing tcl file '" + str(tcl_fname) + "'...")
 
     tcl_writer = qsyn_tcl_writer.QsynTclWriter()
+    tcl_writer.set_tool(selected_syn_tool)
 
     num_errors += generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr, use_custom_pdk)
 
@@ -336,6 +338,11 @@ if __name__ == "__main__":
         help="The root directory to search pdk, netlists etc. which are required by the task",
     )
     parser.add_argument(
+        "--tool_config",
+        required=True,
+        help="The tool configuration for available synthesis tools and their arguments",
+    )
+    parser.add_argument(
         "--pdk_config",
         required=True,
         help="The PDK configuration for a PDK. Once defined, the pdk setting in your task configuration will be overwritten except the corner selection.",
@@ -380,6 +387,10 @@ if __name__ == "__main__":
     task_mgr = qsyn_task_manager.QsynTaskManager()
     task_mgr.load(args.config)
 
+    # Read tool configuration
+    tool_mgr = qsyn_tool_manager.QsynToolManager()
+    tool_mgr.load(args.tool_config)
+
     # Read device data based on the selection in task configuration
     device_mgr = qsyn_device_manager.QsynDeviceManager()
     logging.info("Loading the PDK settings provided by users")
@@ -416,13 +427,15 @@ if __name__ == "__main__":
                 + task_mgr.synth_task_current_design(synth_task_id, curr_design_id)
             )
             job_mgr.create_job(job_name, mode)
-            dc_job_rundir = job_mgr.dc_rundir(job_name)
+            qsyn_job_rundir = job_mgr.qsyn_rundir(job_name)
             # Generate tcl script to run PTPX
-            tcl_fname = generate_dc_tcl_filename(dc_job_rundir)
+            tcl_fname = generate_qsyn_tcl_filename(qsyn_job_rundir)
+            curr_syn_tool = task_mgr.synth_tool(synth_task_id)
             if not args.parse_report_only:
-                num_errors += generate_dc_tcl_file(
+                num_errors += generate_qsyn_tcl_file(
                     tcl_fname,
                     use_custom_pdk,
+                    curr_syn_tool,
                     task_mgr,
                     device_mgr,
                     synth_task_id,
