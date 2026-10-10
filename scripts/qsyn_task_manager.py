@@ -21,9 +21,8 @@ TASKS_TARGETLIB_TAG = "target_library"
 TASKS_SDC_TAG = "sdc"
 TASKS_POST_COMPILE_SDC_TAG = "post_compile_sdc"
 TASKS_COMPILE_TAG = "compile"
-TASKS_COMPILE_TYPE_TAG = "type"
-TASKS_COMPILE_OPT_TAG = "optimization"
-TASKS_COMPILE_EFFORT_TAG = "effort"
+TASKS_COMPILE_TOOL_TAG = "tool"
+TASKS_COMPILE_OPT_TAG = "optimization_recipe"
 TASKS_REMOVETIMESTAMP_TAG = "remove_time_stamp"
 TASKS_NAMERULE_TAG = "name_rule"
 TASKS_CHECK_TIMING_TAG = "check_timing"
@@ -319,29 +318,15 @@ class QsynTaskManager:
     # Get if the current synthesis task require a stage of compilation
     def synth_task_require_compile(self, task_idx):
         self.__check_valid()
-        return TASKS_COMPILE_TAG in self.__db_[TASKS_TAG][task_idx]
+        if TASKS_COMPILE_TAG not in self.__db_[TASKS_TAG][task_idx]:
+            raise Exception(f"Required syntax '{TASKS_COMPILE_TAG}' not defined under task '{self.synth_task_name(task_idx)}'")
+        return TASKS_COMPILE_OPT_TAG in self.__db_[TASKS_TAG][task_idx][COMPILE]
 
-    # Get the compilation type, optimization objective and effort level
-    def synth_task_compile_type(self, task_idx):
+    def synth_task_optimization_recipe(self, task_idx):
         self.__check_valid()
-        if TASKS_COMPILE_TAG in self.__db_[TASKS_TAG][task_idx]:
-            if TASKS_COMPILE_TYPE_TAG in self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG]:
-                return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_TYPE_TAG]
-        return "ultra"
-
-    def synth_task_compile_optimization(self, task_idx):
-        self.__check_valid()
-        if TASKS_COMPILE_TAG in self.__db_[TASKS_TAG][task_idx]:
-            if TASKS_COMPILE_OPT_TAG in self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG]:
-                return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_OPT_TAG]
-        return "balanced"
-
-    def synth_task_compile_effort(self, task_idx):
-        self.__check_valid()
-        if TASKS_COMPILE_TAG in self.__db_[TASKS_TAG][task_idx]:
-            if TASKS_COMPILE_EFFORT_TAG in self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG]:
-                return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_EFFORT_TAG]
-        return "high"
+        if self.synth_task_require_compile(task_idx):
+            return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_OPT_TAG]
+        raise Exception(f"Required syntax '{TASKS_COMPILE_OPT_TAG}' not defined under task '{self.synth_task_name(task_idx)}' which requires optimization")
 
     # Get the sdc file to be pre-loaded brefore running actual report_timing for a given report timing task
     def synth_task_report_area(self, task_idx):
