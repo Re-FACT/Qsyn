@@ -44,8 +44,8 @@ class QsynTclWriter:
         self.__sdcs_ = []
         self.__subblock_sdc_ = []
         self.__post_compile_sdcs_ = []
-        self.__compile_options_ = {}
-        self.__subblock_compile_options_ = {}
+        self.__opt_recipe_ = {}
+        self.__subblock_opt_recipe_ = {}
         self.__session_name_ = ""
         self.__report_area_ = False
         self.__report_area_options_ = {}
@@ -198,23 +198,11 @@ class QsynTclWriter:
     def set_subblocks_target_library_subset(self, val):
         self.__subblocks_library_subset_ = val
 
-    def set_compile_type(self, val):
-        self.__compile_options_["type"] = val
+    def set_optimization_recipe(self, val):
+        self.__opt_recipe_ = val
 
-    def set_compile_optimization(self, val):
-        self.__compile_options_["optimization"] = val
-
-    def set_compile_effort(self, val):
-        self.__compile_options_["effort"] = val
-
-    def set_subblock_compile_type(self, val):
-        self.__subblock_compile_options_["type"] = val
-
-    def set_subblock_compile_optimization(self, val):
-        self.__subblock_compile_options_["optimization"] = val
-
-    def set_subblock_compile_effort(self, val):
-        self.__subblock_compile_options_["effort"] = val
+    def set_subblock_optimization_recipe(self, val):
+        self.__subblock_opt_recipe_ = val
 
     def get_subblocks_target_library_subset(self, val):
         self.__target_library_var_ = val
@@ -312,7 +300,9 @@ class QsynTclWriter:
         if self.__tool_ == TOOL_SNPS_DC:
             fp.write(f"elaborate {val}\n")
         if self.__tool_ == TOOL_YOSYS:
-            fp.write("hierarchy -check -top {val}\n")
+            fp.write(f"hierarchy -check -top {val}\n")
+            if self.__synth_task_top_flatten_:
+                fp.write(f"flatten\n")
 
     # Create a line of appvar
     def __write_read_sdc_line(self, fp, val):
@@ -393,20 +383,6 @@ class QsynTclWriter:
         for db in self.__dbs_:
             link_path_val += " " + os.path.basename(db)
         self.__write_setvar_line(fp, CMD_LINK_PATH, '"' + link_path_val + '"')
-
-    # Create a line of save_session
-    def __write_compile_design_line(self, fp, compile_options):
-        if not compile_options or len(compile_options) == 0:
-            return
-        if compile_options["type"] == "ultra":
-            fp.write(f"compile_ultra\n")
-        else:
-            fp.write("compile")
-            if compile_options["optimization"] != "balanced":
-                opt_type = compile_options["optimization"]
-                opt_effort = compile_options["effort"]
-                fp.write(f" -{opt_type}_effort {opt_effort}")
-            fp.write("\n")
 
     def __write_custom_recipe(self, fp, src_recipe_file):
         with open(src_recipe_file, 'r') as infile:
@@ -556,7 +532,7 @@ class QsynTclWriter:
                         )
 
                 self.__write_link(o_tcl_f)
-                self.__write_compile_design_line(o_tcl_f, self.__subblock_compile_options_)
+                self.__write_custom_recipe(o_tcl_f, self.__subblock_opt_recipe_)
                 self.__write_subblock_current_design_top_design_name(o_tcl_f)
                 self.__write_set_dont_touch(o_tcl_f)
                 if self.__subblocks_rename_prefix:
@@ -577,7 +553,7 @@ class QsynTclWriter:
             # Write top level flatten command
             if self.__synth_task_top_flatten_:
                 self.__write_flatten_line(o_tcl_f)
-            self.__write_compile_design_line(o_tcl_f, self.__compile_options_)
+            self.__write_custom_recipe(o_tcl_f, self.__opt_recipe_)
 
             # Read post-compile sdc
             self.__write_comment_line(o_tcl_f, "Read post-compile SDC files")
@@ -653,7 +629,7 @@ class QsynTclWriter:
             self.__write_elaborate_design_line(o_tcl_f, self.__design_name_)
             # Read the external file and directly add its content
             self.__write_comment_line(o_tcl_f, "Include custom synthesis recipe")
-            self.__write_custom_recipe(o_tcl_f, self.__compile_recipe_)
+            self.__write_custom_recipe(o_tcl_f, self.__opt_recipe_)
             # Run tech map on target libs
             self.__write_comment_line(o_tcl_f, "Technology mapping")
             if self.__write_design_file_:

@@ -232,14 +232,8 @@ def generate_qsyn_tcl_file(
         compile = task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task])
         tcl_writer.set_subblocks_compile(subblock_task, compile)
         if task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task]):
-            tcl_writer.set_subblock_compile_type(
-                task_mgr.synth_task_subblocks_compile_type(task_id, name_to_idx[subblock_task])
-            )
-            tcl_writer.set_subblock_compile_optimization(
-                task_mgr.synth_task_subblocks_compile_optimize(task_id, name_to_idx[subblock_task])
-            )
-            tcl_writer.set_subblock_compile_effort(
-                task_mgr.synth_task_subblocks_compile_effort(task_id, name_to_idx[subblock_task])
+            tcl_writer.set_subblock_optimization_recipe(
+                task_mgr.synth_task_subblocks_optimization_recipe(task_id, name_to_idx[subblock_task])
             )
         if task_mgr.synth_task_subblocks_rename_prefix(task_id, name_to_idx[subblock_task]):
             tcl_writer.set_subblock_rename_prefix(True)
@@ -258,9 +252,7 @@ def generate_qsyn_tcl_file(
 
     # Specify compilation style
     if task_mgr.synth_task_require_compile(task_id):
-        tcl_writer.set_compile_type(task_mgr.synth_task_compile_type(task_id))
-        tcl_writer.set_compile_optimization(task_mgr.synth_task_compile_optimization(task_id))
-        tcl_writer.set_compile_effort(task_mgr.synth_task_compile_effort(task_id))
+        tcl_writer.set_optimization_recipe(task_mgr.synth_task_optimization_recipe(task_id))
 
         # Specify the synthesized netlist file
         synth_nlist = os.path.join(
