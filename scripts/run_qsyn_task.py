@@ -431,7 +431,7 @@ if __name__ == "__main__":
                 rpt_dir.append(curr_rpt_file)
                 if "area_report" == task_mgr.synth_task_report_type(synth_task_id, curr_rpt_id):
                     rpt_mgr.add_area_report_file(
-                        curr_area_rpt_file,
+                        curr_rpt_file,
                         curr_design_name,
                     )
 

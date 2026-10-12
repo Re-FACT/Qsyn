@@ -33,7 +33,7 @@ class QsynJobManager:
         # TODO: Loaded from a method? Avoid duplicated definition in qsyn_tcl_writer.py
         self.__SNPS_DC_TOOL_NAME_ = "snps_dc"
         self.__YOSYS_TOOL_NAME_ = "yosys"
-        self.__SUPPORTED_TOOLS = [ self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_ ]
+        self.__SUPPORTED_TOOLS_ = [ self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_ ]
 
     # Set default runtime directory name
     def set_runtime_dir_prefix(self, val):
@@ -48,6 +48,7 @@ class QsynJobManager:
         self.__job_names_.append(job_name)
         self.__job_names_mode_map[job_name] = mode
         # Give a default empty script
+        self.__job_tool_names_.append("")
         self.__job_tool_bins_.append("")
         self.__job_tool_args_.append("")
         self.__tcl_scripts_.append("")
