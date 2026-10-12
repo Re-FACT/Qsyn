@@ -61,14 +61,12 @@ def generate_qsyn_tcl_filename(tcldir):
 # - load design
 # - load pdk
 #####################################################################
-def generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr, use_custom_pdk):
+def generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr):
     num_errors = 0
 
     # Add db one by one
     pvt_corner_label = task_mgr.technology_corner()
-    db_root = task_mgr.technology_root()
-    if use_custom_pdk:
-        db_root = ""
+    db_root = ""
     for sc_lib in device_mgr.standard_cell_libs(db_root, pvt_corner_label):
         tcl_writer.add_db(sc_lib)
 
@@ -151,7 +149,6 @@ def process_subblocks_depends(task_id):
 #####################################################################
 def generate_qsyn_tcl_file(
     tclfname,
-    use_custom_pdk,
     selected_syn_tool,
     task_mgr,
     device_mgr,
@@ -170,14 +167,12 @@ def generate_qsyn_tcl_file(
     tcl_writer = qsyn_tcl_writer.QsynTclWriter()
     tcl_writer.set_tool(selected_syn_tool)
 
-    num_errors += generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr, use_custom_pdk)
+    num_errors += generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr)
 
     # Organize the variable for target library
     target_sc_libs = []
-    db_root = task_mgr.technology_root()
     pvt_corner_label = task_mgr.technology_corner()
-    if use_custom_pdk:
-        db_root = ""
+    db_root = ""
 
     tgt_lib_fpath_map = {}
     if task_mgr.synth_task_require_compile(task_id):
@@ -189,7 +184,7 @@ def generate_qsyn_tcl_file(
                 raise Exception(f"Invalid standard cell library name '{sc_lib_tag}'")
             target_sc_libs.append(curr_target_sc_lib)
             tgt_lib_fpath_map[sc_lib_tag] = curr_target_sc_lib
-        tcl_write.set_target_libs(target_sc_libs)
+        tcl_writer.set_target_libs(target_sc_libs)
 
     # Add variables for micro floorplan synth
     design_name = task_mgr.synth_task_current_design(task_id, design_id)
@@ -221,19 +216,19 @@ def generate_qsyn_tcl_file(
             )
             subset = " ".join(subset_path)
             tcl_writer.get_subblocks_target_library_subset(subset)
-        sdc_file = task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task])[
-            first_index
-        ]
-        if sdc_file:
-            tcl_writer.set_subblocks_sdc(True)
-            tcl_writer.get_source_subblock_tcl_file(subblock_task, os.path.abspath(sdc_file))
+        sdc_files = task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task])
+        if sdc_files: 
+            sdc_file = sdc_files[0]
+            if sdc_file:
+                tcl_writer.set_subblocks_sdc(True)
+                tcl_writer.get_source_subblock_tcl_file(subblock_task, os.path.abspath(sdc_file))
         # Add subblock sdc
         # print("sdc_file*****************",task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task]))
         # for sdc_f in task_mgr.synth_task_subblocks_sdc(task_id,name_to_idx[subblock_task]):
         #     tcl_writer.add_subblock_sdc(sdc_f)
-        req_compile = task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task])
+        req_compile = task_mgr.synth_task_subblocks_require_compile(task_id, name_to_idx[subblock_task])
         tcl_writer.set_subblocks_compile(subblock_task, req_compile)
-        if task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task]):
+        if req_compile:
             tcl_writer.set_subblock_optimization_recipe(
                 task_mgr.synth_task_subblocks_optimization_recipe(task_id, name_to_idx[subblock_task])
             )
@@ -250,7 +245,6 @@ def generate_qsyn_tcl_file(
     tcl_writer.set_design_name(task_mgr.synth_task_current_design(task_id, design_id))
     tcl_writer.set_remove_time_stamp(task_mgr.synth_task_remove_time_stamp(task_id))
     tcl_writer.set_use_name_rule(task_mgr.synth_task_use_name_rule(task_id))
-    tcl_writer.set_check_timing(task_mgr.synth_task_get_check_timing_rpt(task_id, design_id))
 
     # Specify compilation style
     if task_mgr.synth_task_require_compile(task_id):
@@ -265,8 +259,8 @@ def generate_qsyn_tcl_file(
 
     # Enable reports.
     for irpt in task_mgr.synth_task_reports(task_id):
-        rpt_fpath = task_mgr.synth_task_report_path(task_id, irpt)
-        rpt_cmds = task_mgr.synth_task_report_commands(task_id, irpt, tgt_lib_fpath_map)
+        rpt_fpath = task_mgr.synth_task_report_path(task_id, design_id, irpt)
+        rpt_cmds = task_mgr.synth_task_report_commands(task_id, design_id, irpt, tgt_lib_fpath_map)
         rpt_no_ts = task_mgr.synth_task_report_remove_time_stamp(task_id, irpt)
         tcl_writer.add_report(rpt_fpath, rpt_cmds, rpt_no_ts)
 
@@ -373,7 +367,7 @@ if __name__ == "__main__":
     # Read device data based on the selection in task configuration
     device_mgr = qsyn_device_manager.QsynDeviceManager()
     logging.info("Loading the PDK settings provided by users")
-    device_mgr.load(args.custom_pdk)
+    device_mgr.load(args.pdk_config)
 
     # Load mux modules if provided
     mux_module_mgr = mux_module_manager.MuxModuleManager()
@@ -410,11 +404,10 @@ if __name__ == "__main__":
             qsyn_job_rundir = job_mgr.qsyn_rundir(job_name)
             # Generate tcl script to run PTPX
             tcl_fname = generate_qsyn_tcl_filename(qsyn_job_rundir)
-            curr_syn_tool = task_mgr.synth_tool(synth_task_id)
+            curr_syn_tool = task_mgr.synth_task_compile_tool(synth_task_id)
             if not args.parse_report_only:
                 num_errors += generate_qsyn_tcl_file(
                     tcl_fname,
-                    use_custom_pdk,
                     curr_syn_tool,
                     task_mgr,
                     device_mgr,

@@ -37,7 +37,7 @@ synth_tasks:
         path: "./reports/[current_design]_area.rpt" 
         # [current_path] will be replaced by the value of the path, [current_target_lib] will be replaced by the target_library
         commands:
-          - "stat -liberty [current_target_lib]"
+          - "tee -o [current_path] stat -liberty [current_target_lib]"
         remove_time_stamp: true
     # All the subblocks should be synthesis before running the current blocks
     subblocks:
@@ -72,6 +72,10 @@ synth_tasks:
       - name: po_ff
         pattern: logical_tile_io_po_mode_physical__iopad_mode_default__ff
         flatten: false
+        compile:
+          tool: yosys
+          # The custom optimization recipe to run synthesis
+          optimization_recipe: ys_opt.ys
         rename_prefix: true
       - name: config_mem
         pattern: [from_config_mem]

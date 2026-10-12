@@ -16,7 +16,7 @@ synth: unzip_netlist
 
 generate_script_only: unzip_netlist
 # Generate the input files required by synthesis flow. Users need to run synthesis manually
-	${PYTHON_EXEC} ${SCRIPT_DIR}/run_qsyn_task.py --config ./config/qsyn_task.yaml --root_directory ${PROJ_HOME} ${OTHER_OPTIONS} --jobs ${NUM_JOBS}
+	${PYTHON_EXEC} ${SCRIPT_DIR}/run_qsyn_task.py --config ./config/qsyn_task.yaml --tool_config ${TOOL_CONFIG_DIR}/syn_tool_config.yml --pdk_config ${PDK_CONFIG_DIR}/sky130_hd_constants.xml --root_directory ${PROJ_HOME} ${OTHER_OPTIONS} --jobs ${NUM_JOBS}
 
 clean:
 # Remove all the previous run

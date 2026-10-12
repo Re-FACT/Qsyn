@@ -31,9 +31,9 @@ class QsynJobManager:
         self.__error_counts_ = []  # Flag it DC run is successfully or not
         # Constants
         # TODO: Loaded from a method? Avoid duplicated definition in qsyn_tcl_writer.py
-        self.__SNPS_TOOL_NAME_ = "snps_dc"
+        self.__SNPS_DC_TOOL_NAME_ = "snps_dc"
         self.__YOSYS_TOOL_NAME_ = "yosys"
-        self.__SUPPORTED_TOOLS = [ self.__SNPS_TOOL_NAME_, self.__YOSYS_TOOL_NAME_ ]
+        self.__SUPPORTED_TOOLS = [ self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_ ]
 
     # Set default runtime directory name
     def set_runtime_dir_prefix(self, val):
@@ -139,9 +139,9 @@ class QsynJobManager:
             # check log
             if check_log:
                 # tool name has been validated when set_tool() is called. No need to double check here
-                if self.__job_tool_names_[job_idx] == self.__SNPS_DC_TOOL_NAME_
+                if self.__job_tool_names_[job_idx] == self.__SNPS_DC_TOOL_NAME_:
                     job_status[job_name] += self.parse_snps_dc_log(job_name)
-                if self.__job_tool_names_[job_idx] == self.__YOSYS_TOOL_NAME_
+                if self.__job_tool_names_[job_idx] == self.__YOSYS_TOOL_NAME_:
                     job_status[job_name] += self.parse_yosys_log(job_name)
 
             return job_status
