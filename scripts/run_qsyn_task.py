@@ -400,10 +400,11 @@ if __name__ == "__main__":
         if not curr_task_selected:
             continue
         for curr_design_id in task_mgr.synth_task_current_designs(synth_task_id):
+            curr_design_name = task_mgr.synth_task_current_design(synth_task_id, curr_design_id)
             job_name = (
                 task_mgr.synth_task_name(synth_task_id)
                 + "_"
-                + task_mgr.synth_task_current_design(synth_task_id, curr_design_id)
+                + curr_design_name
             )
             job_mgr.create_job(job_name, mode)
             qsyn_job_rundir = job_mgr.qsyn_rundir(job_name)
@@ -423,21 +424,23 @@ if __name__ == "__main__":
                     config_mem_mgr,
                 )
             job_mgr.set_tcl_script(job_name, tcl_fname)
-            if task_mgr.synth_task_report_area(synth_task_id):
-                curr_area_rpt_file = task_mgr.synth_task_report_area_file(
-                    synth_task_id, curr_design_id
+            # Config the tool, binary and args for the current job
+            cust_args = {}
+            cust_args[qsyn_tool_manager.TCL_KEYWORD] = os.path.abspath(tcl_fname)
+            curr_tool = task_mgr.synth_task_compile_tool(synth_task_id)
+            curr_tool_bin = tool_mgr.binary_path(curr_tool)
+            curr_tool_args = tool_mgr.tool_args(curr_tool, cust_args)
+            job_mgr.set_tool(job_name, curr_tool, curr_tool_bin, curr_tool_args)
+            for curr_rpt_id in task_mgr.synth_task_reports(synth_task_id):
+                curr_rpt_file = task_mgr.synth_task_report_path(
+                    synth_task_id, curr_design_id, curr_rpt_id
                 )
-                rpt_dir.append(curr_area_rpt_file)
-                rpt_mgr.add_area_report_file(
-                    curr_area_rpt_file,
-                    task_mgr.synth_task_current_design(synth_task_id, curr_design_id),
-                )
-            if task_mgr.synth_task_report_timing(synth_task_id):
-                rpt_dir.append(
-                    task_mgr.synth_task_report_timing_file(synth_task_id, curr_design_id)
-                )
-            if task_mgr.synth_task_report_power(synth_task_id):
-                rpt_dir.append(task_mgr.synth_task_report_power_file(synth_task_id, curr_design_id))
+                rpt_dir.append(curr_rpt_file)
+                if "area_report" == task_mgr.synth_task_report_type(synth_task_id, curr_rpt_id):
+                    rpt_mgr.add_area_report_file(
+                        curr_area_rpt_file,
+                        curr_design_name,
+                    )
 
     # Run synthesis and check errors
     if args.file_generation_only or args.parse_report_only:
@@ -446,7 +449,7 @@ if __name__ == "__main__":
         # Create report directories so that primetime do not stop on the error
         for rdir in rpt_dir:
             os.makedirs(os.path.dirname(rdir), exist_ok=True)
-        job_mgr.run_dc_all(args.jobs, True)
+        job_mgr.run_synth_all(args.jobs, True)
         num_errors += job_mgr.num_errors()
         if num_errors:
             logging.info(f"Synthesis job finished with {num_errors} errors")

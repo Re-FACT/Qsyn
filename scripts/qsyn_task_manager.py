@@ -319,7 +319,15 @@ class QsynTaskManager:
         self.__check_valid()
         if TASKS_COMPILE_TAG not in self.__db_[TASKS_TAG][task_idx]:
             raise Exception(f"Required syntax '{TASKS_COMPILE_TAG}' not defined under task '{self.synth_task_name(task_idx)}'")
-        return TASKS_COMPILE_OPT_TAG in self.__db_[TASKS_TAG][task_idx][COMPILE]
+        return TASKS_COMPILE_OPT_TAG in self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG]
+
+    def synth_task_compile_tool(self, task_idx):
+        self.__check_valid()
+        if self.synth_task_require_compile(task_idx):
+            if TASKS_COMPILE_TOOL_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG]:
+                raise Exception(f"Required syntax '{TASKS_COMPILE_TOOL_TAG}' not defined under task '{self.synth_task_name(task_idx)}' which requires optimization")
+            return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_TOOL_TAG]
+        raise Exception(f"Required syntax '{TASKS_COMPILE_TAG}' not defined under task '{self.synth_task_name(task_idx)}'")
 
     def synth_task_optimization_recipe(self, task_idx):
         self.__check_valid()
@@ -382,7 +390,7 @@ class QsynTaskManager:
             raise Exception(f"Missing required syntax '{TASK_REPORTS_PATH_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!")
         return self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx][TASK_REPORTS_TYPE_TAG])
 
-    def synth_task_report_path(self, task_idx, rpt_idx):
+    def synth_task_report_path(self, task_idx, design_idx, rpt_idx):
         self.__check_valid()
         self.__valid_synth_task_report_id(task_idx, rpt_idx)
         if (TASK_REPORTS_PATH_TAG not in self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx]):
