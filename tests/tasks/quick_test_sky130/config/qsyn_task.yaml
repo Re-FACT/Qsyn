@@ -27,7 +27,7 @@ synth_tasks:
       tool: yosys
       # The custom optimization recipe to run synthesis
       # If not provided, no optimization is applied. The flow is for analyzing only
-      optimization_recipe: ys_opt.ys
+      optimization_recipe: config/ys_opt.ys
     target_library: 
       - "hd" 
     reports:  

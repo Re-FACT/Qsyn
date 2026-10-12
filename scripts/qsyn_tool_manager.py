@@ -39,7 +39,7 @@ class QsynToolManager:
             raise Exception(
                 f"Required syntax '{BIN_TAG}' is not defined under tool '{tool}' in the tool configuration file!\n"
             )
-        return self.__db_[task_type][BIN_TAG]
+        return self.__db_[tool][BIN_TAG]
 
     def __tool_pargs(self, tool, cust_args):
         if PARGS_TAG not in self.__db_[tool]:
