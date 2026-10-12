@@ -231,8 +231,8 @@ def generate_qsyn_tcl_file(
         # print("sdc_file*****************",task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task]))
         # for sdc_f in task_mgr.synth_task_subblocks_sdc(task_id,name_to_idx[subblock_task]):
         #     tcl_writer.add_subblock_sdc(sdc_f)
-        compile = task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task])
-        tcl_writer.set_subblocks_compile(subblock_task, compile)
+        req_compile = task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task])
+        tcl_writer.set_subblocks_compile(subblock_task, req_compile)
         if task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task]):
             tcl_writer.set_subblock_optimization_recipe(
                 task_mgr.synth_task_subblocks_optimization_recipe(task_id, name_to_idx[subblock_task])
