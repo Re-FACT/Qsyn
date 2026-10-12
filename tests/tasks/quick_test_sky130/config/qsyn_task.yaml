@@ -1,7 +1,7 @@
 # General settings, including device and pdk information
 technology:
   name: sky130
-  root: "etc/pdk/sky130/std_cell"
+  root: "../../../etc/pdk/sky130/std_cell"
   corner: tt_100C_1v80 
   
 netlist:

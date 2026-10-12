@@ -66,7 +66,7 @@ def generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr):
 
     # Add db one by one
     pvt_corner_label = task_mgr.technology_corner()
-    db_root = ""
+    db_root = task_mgr.technology_root()
     for sc_lib in device_mgr.standard_cell_libs(db_root, pvt_corner_label):
         tcl_writer.add_db(sc_lib)
 
@@ -172,7 +172,7 @@ def generate_qsyn_tcl_file(
     # Organize the variable for target library
     target_sc_libs = []
     pvt_corner_label = task_mgr.technology_corner()
-    db_root = ""
+    db_root = task_mgr.technology_root()
 
     tgt_lib_fpath_map = {}
     if task_mgr.synth_task_require_compile(task_id):
