@@ -240,10 +240,10 @@ class QsynTclWriter:
     # Create a line of appvar
     def __yosys_write_add_verilog_line(self, fp, val, ftype):
         if ftype == SYSTEM_VERILOG_FILE_TYPE:
-            fp.write("read_verilog -sv " + self.__SVERILOG_NETLIST_FILES_VAR_NAME_ + " " + val + "\n")
+            fp.write(f"read_verilog -sv {val}\n")
             self.__sv_nlist_cnt_ += 1
         elif ftype == VERILOG_FILE_TYPE:
-            fp.write("read_verilog " + self.__VERILOG_NETLIST_FILES_VAR_NAME_ + " " + val + "\n")
+            fp.write(f"read_verilog {val}\n")
             self.__v_nlist_cnt_ += 1
         else:
             raise Exception(
@@ -307,7 +307,7 @@ class QsynTclWriter:
             fp.write(f"exec /bin/sh -c \"sed -i 's/.*Date.*/--removed--/g' {rptf}\"\n")
 
     def __yosys_write_report_command_line(self, fp, rptf, cmds, remove_time_stamp):
-        fp.write(f"exec -- mkdir -p {os.path.dirname(rptf)}\n")
+        fp.write(f"exec mkdir -p {os.path.dirname(rptf)}\n")
         append_rpt = False
         for cmd in cmds:
             tee_opt = "-o"
@@ -363,7 +363,7 @@ class QsynTclWriter:
             fp.write(f"exec /bin/sh -c \"sed -i 's/.*Date.*//g' {val}.v\"\n")
 
     def __yosys_write_design_line(self, fp, val, remove_time_stamp):
-        fp.write(f"exec -- mkdir -p {os.path.dirname(val)}\n")
+        fp.write(f"exec mkdir -p {os.path.dirname(val)}\n")
         fp.write(f"write_verilog -noattr {val}.v\n")
         # Remove time stamp by default
         if remove_time_stamp:

@@ -1,6 +1,6 @@
 SHELL = bash
 PYTHON_EXEC ?= python3
-QSYN_RUN_DIR = _qsyn
+QSYN_RUN_DIR = _work/_qsyn
 SCRIPT_DIR = ../../../scripts
 TOOL_CONFIG_DIR = ../../../etc/tool_config
 PDK_CONFIG_DIR = ../../../etc/pdk_config

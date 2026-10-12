@@ -5,7 +5,7 @@ technology:
   corner: tt_100C_1v80 
   
 netlist:
-  input: "./release/dp/"
+  input: "./netlist/"
   exclude:
     - "fabric_netlists.v"
 # If there is any hard macro, use the link path
@@ -20,8 +20,11 @@ common_sdc:
 synth_tasks: 
   - name: grid_io # Synthesis task description which can be applied to a number of modules. Serve as a unified synthesis recipe which is applicable to a wide range of modules.
     current_design:
-      - grid_io_topL_top
-      - grid_io_topL
+      - grid_io_top_top
+      - grid_io_right_right
+      - grid_io_left_left
+      - grid_io_bottom_bottom
+      - grid_clb
     flatten: true
     compile:
       tool: yosys

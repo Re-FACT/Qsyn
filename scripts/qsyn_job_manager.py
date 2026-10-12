@@ -171,6 +171,8 @@ class QsynJobManager:
                     is_err = True
                 elif re.search("error", curr_line):
                     is_err = True
+                elif re.search("ERROR", curr_line):
+                    is_err = True
                 if is_err:
                     logging.error("Synthesis run error [LINE" + str(line_num) + "]: ")
                     logging.error(curr_line)
