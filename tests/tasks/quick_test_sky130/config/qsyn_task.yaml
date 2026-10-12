@@ -37,7 +37,7 @@ synth_tasks:
       # Yosys only support report area and 
       - name: area
         type: area_report # This report will be parsed and summary will be extracted
-        path: "./reports/[current_design]_area.rpt" 
+        path: "./reports/[current_design]_area.json" 
         # [current_target_lib] will be replaced by the target_library
         # Must use json for area report as the Qor parser only support the format
         commands:
