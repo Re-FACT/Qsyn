@@ -40,4 +40,8 @@ jobs:
       - name: Running test
         shell: bash
         run: |
-          make quick_test
+          cd tests/tasks/quick_test_sky130
+          make generte_script_only
+          make clean
+          make synth
+          make parse_report
