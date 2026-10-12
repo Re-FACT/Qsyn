@@ -125,6 +125,7 @@ class QsynJobManager:
                 + " > "
                 + QSYN_LOG_FILE
             )
+            logging.info(f"Run command:\n\t{run_cmd}\n")
             # Current, we have to disable checks because PrimeTime has issues when loading library compilers
             subprocess.run(run_cmd, shell=True, check=False)
             # Restore
@@ -155,7 +156,7 @@ class QsynJobManager:
         job_idx = self.__job_names_.index(job_name)
         # Log runtime
         start_time = time.time()
-        log_path = os.path.join(self.__rundirs_[job_idx], DC_LOG_FILE)
+        log_path = os.path.join(self.__rundirs_[job_idx], QSYN_LOG_FILE)
         log_abspath = os.path.abspath(log_path)
         # Check if the tcl script is valid
         if not os.path.isfile(log_abspath):
@@ -191,7 +192,7 @@ class QsynJobManager:
         job_idx = self.__job_names_.index(job_name)
         # Log runtime
         start_time = time.time()
-        log_path = os.path.join(self.__rundirs_[job_idx], DC_LOG_FILE)
+        log_path = os.path.join(self.__rundirs_[job_idx], QSYN_LOG_FILE)
         log_abspath = os.path.abspath(log_path)
         # Check if the tcl script is valid
         if not os.path.isfile(log_abspath):
@@ -238,7 +239,7 @@ class QsynJobManager:
         for key in self.__job_names_:
             mode = self.__job_names_mode_map[key]
             curr_thread = threading.Thread(
-                target=self.__thread_run_qsyn,
+                target=self.__thread_run_synth,
                 args=(thread_sema, key, check_log, job_status, job_time, curr_dir, mode),
             )
             curr_thread.start()

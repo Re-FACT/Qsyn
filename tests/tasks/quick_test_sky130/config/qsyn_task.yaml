@@ -35,9 +35,10 @@ synth_tasks:
       - name: area
         type: area_report # This report will be parsed and summary will be extracted
         path: "./reports/[current_design]_area.rpt" 
-        # [current_path] will be replaced by the value of the path, [current_target_lib] will be replaced by the target_library
+        # [current_target_lib] will be replaced by the target_library
+        # Must use json for area report as the Qor parser only support the format
         commands:
-          - "stat -liberty [current_target_lib]"
+          - "stat -liberty [current_target_lib] -json"
         remove_time_stamp: true
     # All the subblocks should be synthesis before running the current blocks
     subblocks:
