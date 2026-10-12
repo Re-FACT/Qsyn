@@ -179,6 +179,7 @@ def generate_qsyn_tcl_file(
     if use_custom_pdk:
         db_root = ""
 
+    tgt_lib_fpath_map = {}
     if task_mgr.synth_task_require_compile(task_id):
         for sc_lib_tag in task_mgr.synth_task_target_library(task_id):
             curr_target_sc_lib = device_mgr.find_standard_cell_library_by_tag(
@@ -187,6 +188,7 @@ def generate_qsyn_tcl_file(
             if not curr_target_sc_lib:
                 raise Exception(f"Invalid standard cell library name '{sc_lib_tag}'")
             target_sc_libs.append(curr_target_sc_lib)
+            tgt_lib_fpath_map[sc_lib_tag] = curr_target_sc_lib
         tcl_write.set_target_libs(target_sc_libs)
 
     # Add variables for micro floorplan synth
@@ -261,27 +263,12 @@ def generate_qsyn_tcl_file(
         )
         tcl_writer.set_write_design_file(synth_nlist)
 
-    # Enable report P.P.A.
-    if task_mgr.synth_task_report_area(task_id):
-        tcl_writer.set_report_area(True)
-        tcl_writer.set_report_area_file(task_mgr.synth_task_report_area_file(task_id, design_id))
-
-    if task_mgr.synth_task_report_timing(task_id):
-        tcl_writer.set_report_timing(True)
-        tcl_writer.set_report_timing_file(
-            task_mgr.synth_task_report_timing_file(task_id, design_id)
-        )
-
-    if task_mgr.synth_task_report_power(task_id):
-        tcl_writer.set_report_power(True)
-        tcl_writer.set_report_power_file(task_mgr.synth_task_report_power_file(task_id, design_id))
-        tcl_writer.set_report_power_hierarchy(task_mgr.synth_task_report_power_hierarchy(task_id))
-
-    if task_mgr.synth_task_check_timing(task_id):
-        tcl_writer.set_check_timing_rpt(True)
-        tcl_writer.set_check_timing_rpt_file(
-            task_mgr.synth_task_get_check_timing_rpt(task_id, design_id)
-        )
+    # Enable reports.
+    for irpt in task_mgr.synth_task_reports(task_id):
+        rpt_fpath = task_mgr.synth_task_report_path(task_id, irpt)
+        rpt_cmds = task_mgr.synth_task_report_commands(task_id, irpt, tgt_lib_fpath_map)
+        rpt_no_ts = task_mgr.synth_task_report_remove_time_stamp(task_id, irpt)
+        tcl_writer.add_report(rpt_fpath, rpt_cmds, rpt_no_ts)
 
     # Decide if we should save the session after synthesis task is accomplished
     if task_mgr.synth_task_save_session(task_id):

@@ -25,14 +25,11 @@ TASKS_COMPILE_TOOL_TAG = "tool"
 TASKS_COMPILE_OPT_TAG = "optimization_recipe"
 TASKS_REMOVETIMESTAMP_TAG = "remove_time_stamp"
 TASKS_NAMERULE_TAG = "name_rule"
-TASKS_CHECK_TIMING_TAG = "check_timing"
-TASKS_REPORTAREA_TAG = "report_area"
-TASKS_REPORTAREA_FILE_TAG = "file"
-TASKS_REPORTTIMING_TAG = "report_timing"
-TASKS_REPORTTIMING_FILE_TAG = "file"
-TASKS_REPORTPOWER_TAG = "report_power"
-TASKS_REPORTPOWER_FILE_TAG = "file"
-TASKS_REPORTPOWER_HIERARCHY_TAG = "hierarchy"
+TASKS_REPORTS_TAG = "reports"
+TASKS_REPORTS_NAME_TAG = "name"
+TASKS_REPORTS_PATH_TAG = "path"
+TASKS_REPORTS_CMD_TAG = "commands"
+TASKS_REPORTS_REMOVETIMESTAMP_TAG = "remove_time_stamp"
 TASKS_SESSION_TAG = "session"
 TASKS_SUBBLOCKS_TAG = "subblocks"
 TASKS_SUBBLOCKS_NAME_TAG = "name"
@@ -42,14 +39,16 @@ TASKS_FLATTEN_TAG = "flatten"
 TASKS_CHECK_TIMING_FILE_TAG = "file"
 TASKS_SUBBLOCKS_DEPENDS_TAG = "depends"
 TASKS_SUBBLOCKS_COMPILE_TAG = "compile"
-TASKS_SUBBLOCKS_COMPILE_TYPE_TAG = "type"
-TASKS_SUBBLOCKS_COMPILE_OPTIMIZE_TAG = "optimize"
-TASKS_SUBBLOCKS_COMPILE_EFFORT_TAG = "effort"
+TASKS_SUBBLOCKS_COMPILE_TOOL_TAG = "tool"
+TASKS_SUBBLOCKS_COMPILE_OPT_TAG = "optimization_recipe"
 TASKS_SUBBLOCKS_TARGET_LIBRARY_OPTION_TAG = "target_library_option"
 TASKS_SUBBLOCKS_TARGET_LIBRARY_SUBSET_TAG = "target_library_subset"
 TASKS_SUBBLOCKS_SDC_TAG = "sdc"
 TASKS_SUBBLOCKS_RENAME_PREFIX_TAG = "rename_prefix"
 
+# Keywords
+CURRENT_PATH_KEYWORD = "[current_path]"
+CURRENT_TARGET_LIB_KEYWORD = "[current_target_lib]"
 CURRENT_DESIGN_KEYWORD = "[current_design]"
 
 DEVICE_DATA_MAP = {
@@ -328,67 +327,87 @@ class QsynTaskManager:
             return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_OPT_TAG]
         raise Exception(f"Required syntax '{TASKS_COMPILE_OPT_TAG}' not defined under task '{self.synth_task_name(task_idx)}' which requires optimization")
 
+    def __check_target_lib_for_reserved_words(self, curr_tgt_libs):
+        if len(curr_tgt_libs) == 0:
+            raise Exception(f"Invalid target libraries for synthesis task '{self.synth_task_name(task_idx)}. Expect at least 1 defined.")
+        if len(curr_tgt_libs) > 1:
+            raise Exception(f"Invalid target libraries for synthesis task '{self.synth_task_name(task_idx)}. Expect only 1 defined.")
+
+    def __report_path_replace_reserved_words(self, fname, task_idx, design_idx):
+        temp_fname = fname
+        if design_idx != None:
+            temp_fname = temp_fname.replace(
+                CURRENT_DESIGN_KEYWORD, self.synth_task_current_design(task_idx, design_idx)
+            )
+        return temp_fname
+
+    def __report_cmd_replace_reserved_words(self, fname, task_idx, design_idx, rpt_idx, tgt_lib_fpath_map):
+        temp_fname = fname
+        temp_fname = temp_fname.replace(
+            CURRENT_PATH_KEYWORD, self.synth_task_report_path(task_idx, rpt_idx)
+        )
+        curr_tgt_libs = self.synth_task_target_library(task_idx)
+        self.__check_target_lib_for_reserved_words(curr_tgt_libs)
+        temp_fname = temp_fname.replace(
+            CURRENT_TARGET_LIB, tgt_lib_fpath_map[curr_tgt_libs[0]]
+        )
+        if design_idx != None:
+            temp_fname = temp_fname.replace(
+                CURRENT_DESIGN_KEYWORD, self.synth_task_current_design(task_idx, design_idx)
+            )
+        return temp_fname
+
     # Get the sdc file to be pre-loaded brefore running actual report_timing for a given report timing task
-    def synth_task_report_area(self, task_idx):
+    def synth_task_reports(self, task_idx):
         self.__check_valid()
-        return TASKS_REPORTAREA_TAG in self.__db_[TASKS_TAG][task_idx]
+        if TASK_REPORTS_TAG in self.__db_[TASKS_TAG][task_idx]:
+            return range(len(self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG]))
+        return range(0)
 
-    def synth_task_report_area_file(self, task_idx, design_idx):
+    def __valid_synth_task_report_id(self, task_idx, rpt_idx):
         self.__check_valid()
-        if self.__db_[TASKS_TAG][task_idx][TASKS_REPORTAREA_TAG]:
-            # Replace keywords
-            fname = os.path.abspath(
-                self.__db_[TASKS_TAG][task_idx][TASKS_REPORTAREA_TAG][TASKS_REPORTAREA_FILE_TAG]
-            )
-            fname = fname.replace(
-                CURRENT_DESIGN_KEYWORD, self.synth_task_current_design(task_idx, design_idx)
-            )
-            return fname
-        return ""
+        return rpt_idx in self.synth_task_reports(task_idx)
 
-    def synth_task_report_timing(self, task_idx):
+    def synth_task_report_name(self, task_idx, rpt_idx):
         self.__check_valid()
-        return TASKS_REPORTTIMING_TAG in self.__db_[TASKS_TAG][task_idx]
+        self.__valid_synth_task_report_id(task_idx, rpt_idx)
+        if (TASK_REPORTS_NAME_TAG not in self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx]):
+            raise Exception(f"Missing required syntax '{TASK_REPORTS_NAME_TAG}' for reports under synthesis task '{self.synth_task_name(task_idx)}'!")
+        return self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx][TASK_REPORTS_NAME_TAG])
 
-    def synth_task_report_timing_file(self, task_idx, design_idx):
+    def synth_task_report_type(self, task_idx, rpt_idx):
         self.__check_valid()
-        if self.__db_[TASKS_TAG][task_idx][TASKS_REPORTTIMING_TAG]:
-            fname = os.path.abspath(
-                self.__db_[TASKS_TAG][task_idx][TASKS_REPORTTIMING_TAG][TASKS_REPORTTIMING_FILE_TAG]
-            )
-            fname = fname.replace(
-                CURRENT_DESIGN_KEYWORD, self.synth_task_current_design(task_idx, design_idx)
-            )
-            return fname
-        return ""
+        self.__valid_synth_task_report_id(task_idx, rpt_idx)
+        if (TASK_REPORTS_TYPE_TAG not in self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx]):
+            raise Exception(f"Missing required syntax '{TASK_REPORTS_PATH_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!")
+        return self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx][TASK_REPORTS_TYPE_TAG])
 
-    def synth_task_report_power(self, task_idx):
+    def synth_task_report_path(self, task_idx, rpt_idx):
         self.__check_valid()
-        return TASKS_REPORTPOWER_TAG in self.__db_[TASKS_TAG][task_idx]
+        self.__valid_synth_task_report_id(task_idx, rpt_idx)
+        if (TASK_REPORTS_PATH_TAG not in self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx]):
+            raise Exception(f"Missing required syntax '{TASK_REPORTS_PATH_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!")
+        fname = os.path.join(os.getcwd(), self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx][TASK_REPORTS_PATH_TAG])
+        return self.__report_path_replace_reserved_words(fname, task_idx, design_idx)
 
-    def synth_task_report_power_file(self, task_idx, design_idx):
+    def synth_task_report_commands(self, task_idx, tgt_lib_fpath_map):
         self.__check_valid()
-        if self.__db_[TASKS_TAG][task_idx][TASKS_REPORTPOWER_TAG]:
-            fname = os.path.abspath(
-                self.__db_[TASKS_TAG][task_idx][TASKS_REPORTPOWER_TAG][TASKS_REPORTPOWER_FILE_TAG]
-            )
-            fname = fname.replace(
-                CURRENT_DESIGN_KEYWORD, self.synth_task_current_design(task_idx, design_idx)
-            )
-            return fname
-        return ""
+        self.__valid_synth_task_report_id(task_idx, rpt_idx)
+        if (TASK_REPORTS_CMD_TAG not in self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx]):
+            raise Exception(f"Missing required syntax '{TASK_REPORTS_CMD_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!")
+        orig_cmds = self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx][TASK_REPORTS_CMD_TAG]
+        final_cmds = []
+        for orig_cmd in orig_cmds:
+            # Actual target lib file name should come from the device data manager
+            final_cmds.append(self.__report_cmd_replace_reserved_words(orig_cmd, task_idx, design_idx, tgt_lib_fpath_map))
+        return final_cmds
 
-    def synth_task_report_power_hierarchy(self, task_idx):
+    def synth_task_report_remove_time_stamp(self, task_idx):
         self.__check_valid()
-        if TASKS_REPORTPOWER_TAG in self.__db_[TASKS_TAG][task_idx]:
-            if (
-                TASKS_REPORTPOWER_HIERARCHY_TAG
-                in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTPOWER_TAG]
-            ):
-                return self.__db_[TASKS_TAG][task_idx][TASKS_REPORTPOWER_TAG][
-                    TASKS_REPORTPOWER_HIERARCHY_TAG
-                ]
-        return 1
+        self.__valid_synth_task_report_id(task_idx, rpt_idx)
+        if (TASK_REPORTS_REMOVETIMESTAMP_TAG not in self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx]):
+            return False
+        return self.__db_[TASKS_TAG][task_idx][TASK_REPORTS_TAG][rpt_idx][TASK_REPORTS_REMOVETIMESTAMP_TAG]
 
     # Internal method to check if data is valid, throw exeception when invalid. Useful for accessors
     def __check_valid(self):
