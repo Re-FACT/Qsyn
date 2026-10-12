@@ -419,7 +419,7 @@ if __name__ == "__main__":
             job_mgr.set_tcl_script(job_name, tcl_fname)
             # Config the tool, binary and args for the current job
             cust_args = {}
-            cust_args[qsyn_tool_manager.TCL_KEYWORD] = os.path.abspath(tcl_fname)
+            cust_args[qsyn_tool_manager.TCL_KEYWORD] = [str(os.path.abspath(tcl_fname))]
             curr_tool = task_mgr.synth_task_compile_tool(synth_task_id)
             curr_tool_bin = tool_mgr.binary_path(curr_tool)
             curr_tool_args = tool_mgr.tool_args(curr_tool, cust_args)
