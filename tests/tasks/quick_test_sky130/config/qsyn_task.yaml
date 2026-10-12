@@ -37,7 +37,7 @@ synth_tasks:
         path: "./reports/[current_design]_area.rpt" 
         # [current_path] will be replaced by the value of the path, [current_target_lib] will be replaced by the target_library
         commands:
-          - "tee -o [current_path] stat -liberty [current_target_lib]"
+          - "stat -liberty [current_target_lib]"
         remove_time_stamp: true
     # All the subblocks should be synthesis before running the current blocks
     subblocks:
