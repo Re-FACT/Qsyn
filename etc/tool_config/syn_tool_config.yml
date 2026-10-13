@@ -9,11 +9,12 @@
 #   - the '[max_cores]' is defined through the syntax 'max_cores'
 yosys:
   bin: yosys
-  options: "pargs kargs"
-  pargs:
-    - name: "[tcl]"
-#  kargs:
-#    - name: "-l [log]"
+  options: "kargs"
+#  options: "pargs kargs"
+#  pargs:
+#    - name: "[tcl]"
+  kargs:
+    - name: "-s [tcl]"
 snps_dc:
   bin: dc_shell
   options: "kargs"

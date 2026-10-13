@@ -15,6 +15,11 @@ pattern_idx = 0
 flatten_idx = 1
 GET_LIB_CELLS = "get_lib_cells"
 
+# Support tools
+TOOL_SNPS_DC = "snps_dc"
+TOOL_YOSYS = "yosys"
+SUPPORTED_TOOLS = [TOOL_YOSYS, TOOL_SNPS_DC]
+
 
 # Class of A general purpose Design Compiler Tcl writer
 class QsynTclWriter:
@@ -22,6 +27,7 @@ class QsynTclWriter:
         # constants
         self.__VERILOG_NETLIST_FILES_VAR_NAME_ = "VERILOG_NETLIST_FILES"
         self.__SVERILOG_NETLIST_FILES_VAR_NAME_ = "SVERILOG_NETLIST_FILES"
+        self.__tool_ = ""
         # Internal data
         self.__design_name_ = ""
         self.__appvars_ = {}
@@ -30,20 +36,18 @@ class QsynTclWriter:
             self.__SVERILOG_NETLIST_FILES_VAR_NAME_: "[list ]",
         }
         self.__dbs_ = []
+        self.__target_libs_ = []
         self.__netlists_ = []
         self.__netlist_types_ = []
         self.__sdcs_ = []
         self.__subblock_sdc_ = []
         self.__post_compile_sdcs_ = []
-        self.__compile_options_ = {}
-        self.__subblock_compile_options_ = {}
+        self.__opt_recipe_ = {}
+        self.__subblock_opt_recipe_ = {}
         self.__session_name_ = ""
-        self.__report_area_ = False
-        self.__report_area_options_ = {}
-        self.__report_timing_ = False
-        self.__report_timing_options_ = {}
-        self.__report_power_ = False
-        self.__report_power_options_ = {}
+        self.__report_fpaths_ = []  # A list of report settings: [i] = [fpath, cmds, no_ts]]
+        self.__report_cmds_ = []
+        self.__report_no_time_stamps_ = []
         self.__write_design_file_ = ""
         self.__remove_time_stamp_ = True
         self.__use_name_rule_ = True
@@ -69,6 +73,16 @@ class QsynTclWriter:
         # Internal counter
         self.__v_nlist_cnt_ = 0  # Verilog netlist number
         self.__sv_nlist_cnt_ = 0  # System Verilog netlist number
+
+    def __check_valid_tool(self):
+        if self.__tool_ not in SUPPORTED_TOOLS:
+            raise Exception(
+                f"Synthesis tool '{self.__tool_}' is not in the list of supported tools.\nExpect: {SUPPORTED_TOOLS}\n"
+            )
+
+    # Set the synthesis tool
+    def set_tool(self, val):
+        self.__tool_ = val
 
     # Support netlist file types
     # - Verilog and its compressed copy
@@ -98,6 +112,9 @@ class QsynTclWriter:
     def add_db(self, val):
         self.__dbs_.append(val)
 
+    def set_target_libs(self, val):
+        self.__target_libs_ = val
+
     def add_subblocks(self, val):
         self.__subblocks_name_.append(val)
 
@@ -126,32 +143,10 @@ class QsynTclWriter:
     def add_post_compile_sdc(self, val):
         self.__post_compile_sdcs_.append(val)
 
-    def set_report_area(self, val):
-        self.__report_area_ = val
-
-    def set_report_area_file(self, val):
-        self.__report_area_options_["file"] = val
-
-    def set_report_power(self, val):
-        self.__report_power_ = val
-
-    def set_report_power_file(self, val):
-        self.__report_power_options_["file"] = val
-
-    def set_report_power_hierarchy(self, val):
-        self.__report_power_options_["hierarchy"] = val
-
-    def set_report_timing(self, val):
-        self.__report_timing_ = val
-
-    def set_report_timing_file(self, val):
-        self.__report_timing_options_["file"] = val
-
-    def set_check_timing_rpt(self, val):
-        self.__check_timing_rpt_ = val
-
-    def set_check_timing_rpt_file(self, val):
-        self.__check_timing_rpt_file_ = val
+    def add_report(self, fpath, cmds, no_ts):
+        self.__report_fpaths_.append(fpath)
+        self.__report_cmds_.append(cmds)
+        self.__report_no_time_stamps_.append(no_ts)
 
     def set_write_design_file(self, val):
         self.__write_design_file_ = val
@@ -178,23 +173,11 @@ class QsynTclWriter:
     def set_subblocks_target_library_subset(self, val):
         self.__subblocks_library_subset_ = val
 
-    def set_compile_type(self, val):
-        self.__compile_options_["type"] = val
+    def set_optimization_recipe(self, val):
+        self.__opt_recipe_ = val
 
-    def set_compile_optimization(self, val):
-        self.__compile_options_["optimization"] = val
-
-    def set_compile_effort(self, val):
-        self.__compile_options_["effort"] = val
-
-    def set_subblock_compile_type(self, val):
-        self.__subblock_compile_options_["type"] = val
-
-    def set_subblock_compile_optimization(self, val):
-        self.__subblock_compile_options_["optimization"] = val
-
-    def set_subblock_compile_effort(self, val):
-        self.__subblock_compile_options_["effort"] = val
+    def set_subblock_optimization_recipe(self, val):
+        self.__subblock_opt_recipe_ = val
 
     def get_subblocks_target_library_subset(self, val):
         self.__target_library_var_ = val
@@ -248,10 +231,27 @@ class QsynTclWriter:
 
     # Create a line of appvar
     def __write_read_db_line(self, fp, val):
-        fp.write("read_db " + val + "\n")
+        self.__check_valid_tool()
+        if self.__tool_ == TOOL_SNPS_DC:
+            fp.write("read_db " + val + "\n")
+        if self.__tool_ == TOOL_YOSYS:
+            fp.write("read_liberty -lib " + val + "\n")
 
     # Create a line of appvar
-    def __write_add_verilog_line(self, fp, val, ftype):
+    def __yosys_write_add_verilog_line(self, fp, val, ftype):
+        if ftype == SYSTEM_VERILOG_FILE_TYPE:
+            fp.write(f"read_verilog -sv {val}\n")
+            self.__sv_nlist_cnt_ += 1
+        elif ftype == VERILOG_FILE_TYPE:
+            fp.write(f"read_verilog {val}\n")
+            self.__v_nlist_cnt_ += 1
+        else:
+            raise Exception(
+                "Invalid file type for netlist! Currently support Verilog and SystemVerilog\n"
+            )
+
+    # Create a line of appvar
+    def __snps_dc_write_add_verilog_line(self, fp, val, ftype):
         if ftype == SYSTEM_VERILOG_FILE_TYPE:
             fp.write("lappend " + self.__SVERILOG_NETLIST_FILES_VAR_NAME_ + " " + val + "\n")
             self.__sv_nlist_cnt_ += 1
@@ -271,7 +271,13 @@ class QsynTclWriter:
             fp.write("analyze -f sverilog ${" + self.__SVERILOG_NETLIST_FILES_VAR_NAME_ + "}\n")
 
     def __write_elaborate_design_line(self, fp, val):
-        fp.write("elaborate " + val + "\n")
+        self.__check_valid_tool()
+        if self.__tool_ == TOOL_SNPS_DC:
+            fp.write(f"elaborate {val}\n")
+        if self.__tool_ == TOOL_YOSYS:
+            fp.write(f"hierarchy -check -top {val}\n")
+            if self.__synth_task_top_flatten_:
+                fp.write(f"flatten\n")
 
     # Create a line of appvar
     def __write_read_sdc_line(self, fp, val):
@@ -290,43 +296,29 @@ class QsynTclWriter:
         fp.write("ungroup -flatten -all\n")
 
     # Create a line of report_area
-    def __write_report_area_line(self, fp, rptf, remove_time_stamp):
+    def __snps_dc_write_report_command_line(self, fp, rptf, cmds, remove_time_stamp):
         fp.write("file mkdir " + os.path.dirname(rptf) + "\n")
         fp.write('redirect -file "' + rptf + '" {\n')
-        fp.write("\t" + "report_reference -nosplit -hierarchy" + "\n")
-        fp.write("\t" + "report_area" + "\n")
+        for cmd in cmds:
+            fp.write(f"\t{cmd}\n")
         fp.write("}\n")
         # Remove time stamp by default
         if remove_time_stamp:
             fp.write(f"exec /bin/sh -c \"sed -i 's/.*Date.*/--removed--/g' {rptf}\"\n")
 
-    def __write_report_timing_line(self, fp, rptf, remove_time_stamp):
-        fp.write("file mkdir " + os.path.dirname(rptf) + "\n")
-        fp.write('redirect -file "' + rptf + '" {\n')
-        fp.write("\t" + "report_timing" + "\n")
-        fp.write("}\n")
+    def __yosys_write_report_command_line(self, fp, rptf, cmds, remove_time_stamp):
+        fp.write(f"exec -- mkdir -p {os.path.dirname(rptf)}\n")
+        append_rpt = False
+        for cmd in cmds:
+            tee_opt = "-o"
+            if not append_rpt:
+                tee_opt = "-a"
+                append_rpt = True
+            fp.write(f"tee {tee_opt} {rptf} {cmd}\n")
         # Remove time stamp by default
         if remove_time_stamp:
-            fp.write(f"exec /bin/sh -c \"sed -i 's/.*Date.*/--removed--/g' {rptf}\"\n")
-
-    # Create a line of report_power
-    def __write_report_power_line(self, fp, rptf, val, remove_time_stamp):
-        fp.write("file mkdir " + os.path.dirname(rptf) + "\n")
-        fp.write('redirect -file "' + rptf + '" {\n')
-        fp.write("\t" + "report_power -hierarchy -levels " + str(val) + "\n")
-        fp.write("}\n")
-        # Remove time stamp by default
-        if remove_time_stamp:
-            fp.write(f"exec /bin/sh -c \"sed -i 's/.*Date.*/--removed--/g' {rptf}\"\n")
-
-    # Create a line of check_timing
-    def __write_check_timing_line(self, fp, rptf, var, remove_time_stamp):
-        fp.write("file mkdir " + os.path.dirname(rptf) + "\n")
-        fp.write('redirect -file "' + rptf + '" {\n')
-        fp.write("\t" + var + "\n")
-        fp.write("}\n")
-        if remove_time_stamp:
-            fp.write(f"exec /bin/sh -c \"sed -i 's/.*Date.*/--removed--/g' {rptf}\"\n")
+            sed_cmd = f'exec -- sed -i "1{{/^ \\/\\* Generated by Yosys/d}}" {rptf}'
+            fp.write(sed_cmd + "\n")
 
     # Extract the variable name from a string. For example, variable ${a} -> a
     def __extract_tcl_var_name(self, var):
@@ -353,21 +345,14 @@ class QsynTclWriter:
             link_path_val += " " + os.path.basename(db)
         self.__write_setvar_line(fp, CMD_LINK_PATH, '"' + link_path_val + '"')
 
-    # Create a line of save_session
-    def __write_compile_design_line(self, fp, compile_options):
-        if not compile_options or len(compile_options) == 0:
-            return
-        if compile_options["type"] == "ultra":
-            fp.write(f"compile_ultra\n")
-        else:
-            fp.write("compile")
-            if compile_options["optimization"] != "balanced":
-                opt_type = compile_options["optimization"]
-                opt_effort = compile_options["effort"]
-                fp.write(f" -{opt_type}_effort {opt_effort}")
-            fp.write("\n")
+    def __write_custom_recipe(self, fp, src_recipe_file):
+        with open(src_recipe_file, "r") as infile:
+            # Loop through each line in the source file
+            for line in infile:
+                # Optional: Modify or filter the line here if needed
+                fp.write(line)
 
-    def __write_design_line(self, fp, val, remove_time_stamp, use_name_rule):
+    def __snps_dc_write_design_line(self, fp, val, remove_time_stamp, use_name_rule):
         # Use name rule by default:
         if use_name_rule:
             fp.write("change_names -rules verilog -hierarchy\n")
@@ -376,6 +361,27 @@ class QsynTclWriter:
         # Remove time stamp by default
         if remove_time_stamp:
             fp.write(f"exec /bin/sh -c \"sed -i 's/.*Date.*//g' {val}.v\"\n")
+
+    def __yosys_write_design_line(self, fp, val, remove_time_stamp):
+        fp.write(f"exec -- mkdir -p {os.path.dirname(val)}\n")
+        fp.write(f"write_verilog -noattr {val}.v\n")
+        # Remove time stamp by default
+        if remove_time_stamp:
+            sed_cmd = f'exec -- sed -i "1{{/^ \\/\\* Generated by Yosys/d}}" {val}.v'
+            fp.write(sed_cmd + "\n")
+
+    def __yosys_write_techmap(self, fp):
+        if len(self.__target_libs_) > 1:
+            raise Exception(
+                f"{TOOL_YOSYS} only supports single file as target technology library\n"
+            )
+        if len(self.__target_libs_) == 0:
+            raise Exception(f"{TOOL_YOSYS} require 1 target technology library but found 0\n")
+        for var in self.__target_libs_:
+            fp.write(f"dfflibmap -liberty {var}\n")
+        for var in self.__target_libs_:
+            fp.write(f"abc -liberty {var}\n")
+        fp.write(f"clean\n")
 
     # Create a line of save_session
     def __write_save_session(self, fp, val):
@@ -404,12 +410,15 @@ class QsynTclWriter:
         fp.write('rename_design ${TARGET_DESIGN} -prefix "${TOP_DESIGN_NAME}_" -update_links\n')
 
     # Write content to a file
-    def write(self, fname):
+    def __write_for_snps_dc(self, fname):
         with open(fname, "w") as o_tcl_f:
             # Write appvar
             self.__write_comment_line(o_tcl_f, "Application Variables")
             for var in self.__appvars_.keys():
                 self.__write_setvar_line(o_tcl_f, var, self.__appvars_[var])
+            # Add target libs
+            target_lib_appvar_val = '"' + " ".join(self.__target_libs_) + '"'
+            self.__write_setvar_line(o_tcl_f, "target_library", target_lib_appvar_val)
 
             # Write global paths
             self.__write_comment_line(o_tcl_f, "Global paths")
@@ -427,7 +436,7 @@ class QsynTclWriter:
             # Read verilog
             self.__write_comment_line(o_tcl_f, "Read design files")
             for var_idx in range(len(self.__netlists_)):
-                self.__write_add_verilog_line(
+                self.__snps_dc_write_add_verilog_line(
                     o_tcl_f, self.__netlists_[var_idx], self.__netlist_types_[var_idx]
                 )
             # Analyze and elaborate
@@ -487,7 +496,7 @@ class QsynTclWriter:
                         )
 
                 self.__write_link(o_tcl_f)
-                self.__write_compile_design_line(o_tcl_f, self.__subblock_compile_options_)
+                self.__write_custom_recipe(o_tcl_f, self.__subblock_opt_recipe_)
                 self.__write_subblock_current_design_top_design_name(o_tcl_f)
                 self.__write_set_dont_touch(o_tcl_f)
                 if self.__subblocks_rename_prefix:
@@ -508,7 +517,7 @@ class QsynTclWriter:
             # Write top level flatten command
             if self.__synth_task_top_flatten_:
                 self.__write_flatten_line(o_tcl_f)
-            self.__write_compile_design_line(o_tcl_f, self.__compile_options_)
+            self.__write_custom_recipe(o_tcl_f, self.__opt_recipe_)
 
             # Read post-compile sdc
             self.__write_comment_line(o_tcl_f, "Read post-compile SDC files")
@@ -522,48 +531,77 @@ class QsynTclWriter:
 
             # Write synthesized netlists
             if self.__write_design_file_:
-                self.__write_design_line(
+                self.__snps_dc_write_design_line(
                     o_tcl_f,
                     self.__write_design_file_,
                     self.__remove_time_stamp_,
                     self.__use_name_rule_,
                 )
 
-            # Report area
-            if self.__report_area_:
-                self.__write_comment_line(o_tcl_f, "Report area to file")
-                self.__write_report_area_line(
-                    o_tcl_f, self.__report_area_options_["file"], self.__remove_time_stamp_
-                )
-            if self.__report_timing_:
-                self.__write_comment_line(o_tcl_f, "Report timing to file")
-                self.__write_report_timing_line(
-                    o_tcl_f, self.__report_timing_options_["file"], self.__remove_time_stamp_
-                )
-
-            # Report power
-            if self.__report_power_:
-                self.__write_comment_line(o_tcl_f, "Report power to file")
-                self.__write_report_power_line(
+            # Report
+            self.__write_comment_line(o_tcl_f, "Reports")
+            for irpt in range(self.__report_fpaths_):
+                self.__snps_dc_write_report_command_line(
                     o_tcl_f,
-                    self.__report_power_options_["file"],
-                    self.__report_power_options_["hierarchy"],
-                    self.__remove_time_stamp_,
+                    self.__report_fpaths_[irpt],
+                    self.__report_cmds_[irpt],
+                    self.__report_no_time_stamps_[irpt],
                 )
-
-            if self.__check_timing_rpt_:
-                self.__write_check_timing_line(
-                    o_tcl_f,
-                    self.__check_timing_rpt_file_,
-                    "check_timing",
-                    self.__remove_time_stamp_,
-                )
-
             # Save session
             if self.__session_name_:
                 self.__write_save_session(o_tcl_f, self.__session_name_)
             # Finish
             self.__write_exit_line(o_tcl_f)
+
+    def __write_for_yosys(self, fname):
+        with open(fname, "w") as o_tcl_f:
+            # Read tech libs. Only single liberty file is allowed
+            self.__write_comment_line(o_tcl_f, "Read technology files")
+            if len(self.__dbs_) > 1:
+                raise Exception(f"{TOOL_YOSYS} only supports single file as technology library\n")
+            if len(self.__dbs_) == 0:
+                raise Exception(f"{TOOL_YOSYS} require 1 technology library but found 0\n")
+            for var in self.__dbs_:
+                self.__write_read_db_line(o_tcl_f, var)
+            # Read design sources
+            self.__write_comment_line(o_tcl_f, "Read design files")
+            for var_idx in range(len(self.__netlists_)):
+                self.__yosys_write_add_verilog_line(
+                    o_tcl_f, self.__netlists_[var_idx], self.__netlist_types_[var_idx]
+                )
+            self.__write_elaborate_design_line(o_tcl_f, self.__design_name_)
+            # Read the external file and directly add its content
+            self.__write_comment_line(o_tcl_f, "Include custom synthesis recipe")
+            self.__write_custom_recipe(o_tcl_f, self.__opt_recipe_)
+            # Run tech map on target libs
+            self.__write_comment_line(o_tcl_f, "Technology mapping")
+            if self.__write_design_file_:
+                self.__yosys_write_techmap(o_tcl_f)
+            # Write synthesized netlists
+            self.__write_comment_line(o_tcl_f, "Write synthesized HDL design")
+            if self.__write_design_file_:
+                self.__yosys_write_design_line(
+                    o_tcl_f,
+                    self.__write_design_file_,
+                    self.__remove_time_stamp_,
+                )
+            # Report
+            self.__write_comment_line(o_tcl_f, "Reports")
+            for irpt in range(len(self.__report_fpaths_)):
+                self.__yosys_write_report_command_line(
+                    o_tcl_f,
+                    self.__report_fpaths_[irpt],
+                    self.__report_cmds_[irpt],
+                    self.__report_no_time_stamps_[irpt],
+                )
+
+    # Write content to a file
+    def write(self, fname):
+        self.__check_valid_tool()
+        if self.__tool_ == TOOL_SNPS_DC:
+            self.__write_for_snps_dc(fname)
+        elif self.__tool_ == TOOL_YOSYS:
+            self.__write_for_yosys(fname)
 
     # Clear all the data
     def clear(self):

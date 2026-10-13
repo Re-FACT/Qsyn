@@ -12,6 +12,7 @@ from datetime import timedelta
 from datetime import datetime
 from xml.dom import minidom
 import qsyn_tcl_writer
+import qsyn_tool_manager
 import qsyn_task_manager
 import qsyn_device_manager
 import qsyn_job_manager
@@ -51,24 +52,22 @@ def find_current_task_is_selected(curr_task_name, task_names):
 
 
 #####################################################################
-# Generate the tcl script for a DC task
+# Generate the tcl script for a synthesis task
 def generate_qsyn_tcl_filename(tcldir):
     return os.path.join(os.path.abspath(tcldir), QSYN_TCL_FNAME)
 
 
 #####################################################################
-# Generate the common parts of tcl script for a DC task which can fit multiple purpose:
+# Generate the common parts of tcl script for a synthesis task which can fit multiple purpose:
 # - load design
 # - load pdk
 #####################################################################
-def generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr, use_custom_pdk):
+def generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr):
     num_errors = 0
 
     # Add db one by one
     pvt_corner_label = task_mgr.technology_corner()
     db_root = task_mgr.technology_root()
-    if use_custom_pdk:
-        db_root = ""
     for sc_lib in device_mgr.standard_cell_libs(db_root, pvt_corner_label):
         tcl_writer.add_db(sc_lib)
 
@@ -147,11 +146,11 @@ def process_subblocks_depends(task_id):
 
 
 #####################################################################
-# Generate the tcl script for a DC task for report timing purpose
+# Generate the tcl script for a synthesis task for report timing purpose
 #####################################################################
 def generate_qsyn_tcl_file(
     tclfname,
-    use_custom_pdk,
+    selected_syn_tool,
     task_mgr,
     device_mgr,
     task_id,
@@ -167,16 +166,16 @@ def generate_qsyn_tcl_file(
     logging.info("Writing tcl file '" + str(tcl_fname) + "'...")
 
     tcl_writer = qsyn_tcl_writer.QsynTclWriter()
+    tcl_writer.set_tool(selected_syn_tool)
 
-    num_errors += generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr, use_custom_pdk)
+    num_errors += generate_qsyn_tcl_common_part(tcl_writer, task_mgr, device_mgr)
 
     # Organize the variable for target library
     target_sc_libs = []
-    db_root = task_mgr.technology_root()
     pvt_corner_label = task_mgr.technology_corner()
-    if use_custom_pdk:
-        db_root = ""
+    db_root = task_mgr.technology_root()
 
+    tgt_lib_fpath_map = {}
     if task_mgr.synth_task_require_compile(task_id):
         for sc_lib_tag in task_mgr.synth_task_target_library(task_id):
             curr_target_sc_lib = device_mgr.find_standard_cell_library_by_tag(
@@ -185,7 +184,8 @@ def generate_qsyn_tcl_file(
             if not curr_target_sc_lib:
                 raise Exception(f"Invalid standard cell library name '{sc_lib_tag}'")
             target_sc_libs.append(curr_target_sc_lib)
-        tcl_writer.add_appvar("target_library", '"' + " ".join(target_sc_libs) + '"')
+            tgt_lib_fpath_map[sc_lib_tag] = curr_target_sc_lib
+        tcl_writer.set_target_libs(target_sc_libs)
 
     # Add variables for micro floorplan synth
     design_name = task_mgr.synth_task_current_design(task_id, design_id)
@@ -217,27 +217,25 @@ def generate_qsyn_tcl_file(
             )
             subset = " ".join(subset_path)
             tcl_writer.get_subblocks_target_library_subset(subset)
-        sdc_file = task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task])[
-            first_index
-        ]
-        if sdc_file:
-            tcl_writer.set_subblocks_sdc(True)
-            tcl_writer.get_source_subblock_tcl_file(subblock_task, os.path.abspath(sdc_file))
+        sdc_files = task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task])
+        if sdc_files:
+            sdc_file = sdc_files[0]
+            if sdc_file:
+                tcl_writer.set_subblocks_sdc(True)
+                tcl_writer.get_source_subblock_tcl_file(subblock_task, os.path.abspath(sdc_file))
         # Add subblock sdc
         # print("sdc_file*****************",task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task]))
         # for sdc_f in task_mgr.synth_task_subblocks_sdc(task_id,name_to_idx[subblock_task]):
         #     tcl_writer.add_subblock_sdc(sdc_f)
-        compile = task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task])
-        tcl_writer.set_subblocks_compile(subblock_task, compile)
-        if task_mgr.synth_task_subblocks_compile(task_id, name_to_idx[subblock_task]):
-            tcl_writer.set_subblock_compile_type(
-                task_mgr.synth_task_subblocks_compile_type(task_id, name_to_idx[subblock_task])
-            )
-            tcl_writer.set_subblock_compile_optimization(
-                task_mgr.synth_task_subblocks_compile_optimize(task_id, name_to_idx[subblock_task])
-            )
-            tcl_writer.set_subblock_compile_effort(
-                task_mgr.synth_task_subblocks_compile_effort(task_id, name_to_idx[subblock_task])
+        req_compile = task_mgr.synth_task_subblocks_require_compile(
+            task_id, name_to_idx[subblock_task]
+        )
+        tcl_writer.set_subblocks_compile(subblock_task, req_compile)
+        if req_compile:
+            tcl_writer.set_subblock_optimization_recipe(
+                task_mgr.synth_task_subblocks_optimization_recipe(
+                    task_id, name_to_idx[subblock_task]
+                )
             )
         if task_mgr.synth_task_subblocks_rename_prefix(task_id, name_to_idx[subblock_task]):
             tcl_writer.set_subblock_rename_prefix(True)
@@ -252,13 +250,10 @@ def generate_qsyn_tcl_file(
     tcl_writer.set_design_name(task_mgr.synth_task_current_design(task_id, design_id))
     tcl_writer.set_remove_time_stamp(task_mgr.synth_task_remove_time_stamp(task_id))
     tcl_writer.set_use_name_rule(task_mgr.synth_task_use_name_rule(task_id))
-    tcl_writer.set_check_timing(task_mgr.synth_task_get_check_timing_rpt(task_id, design_id))
 
     # Specify compilation style
     if task_mgr.synth_task_require_compile(task_id):
-        tcl_writer.set_compile_type(task_mgr.synth_task_compile_type(task_id))
-        tcl_writer.set_compile_optimization(task_mgr.synth_task_compile_optimization(task_id))
-        tcl_writer.set_compile_effort(task_mgr.synth_task_compile_effort(task_id))
+        tcl_writer.set_optimization_recipe(task_mgr.synth_task_optimization_recipe(task_id))
 
         # Specify the synthesized netlist file
         synth_nlist = os.path.join(
@@ -267,27 +262,12 @@ def generate_qsyn_tcl_file(
         )
         tcl_writer.set_write_design_file(synth_nlist)
 
-    # Enable report P.P.A.
-    if task_mgr.synth_task_report_area(task_id):
-        tcl_writer.set_report_area(True)
-        tcl_writer.set_report_area_file(task_mgr.synth_task_report_area_file(task_id, design_id))
-
-    if task_mgr.synth_task_report_timing(task_id):
-        tcl_writer.set_report_timing(True)
-        tcl_writer.set_report_timing_file(
-            task_mgr.synth_task_report_timing_file(task_id, design_id)
-        )
-
-    if task_mgr.synth_task_report_power(task_id):
-        tcl_writer.set_report_power(True)
-        tcl_writer.set_report_power_file(task_mgr.synth_task_report_power_file(task_id, design_id))
-        tcl_writer.set_report_power_hierarchy(task_mgr.synth_task_report_power_hierarchy(task_id))
-
-    if task_mgr.synth_task_check_timing(task_id):
-        tcl_writer.set_check_timing_rpt(True)
-        tcl_writer.set_check_timing_rpt_file(
-            task_mgr.synth_task_get_check_timing_rpt(task_id, design_id)
-        )
+    # Enable reports.
+    for irpt in task_mgr.synth_task_reports(task_id):
+        rpt_fpath = task_mgr.synth_task_report_path(task_id, design_id, irpt)
+        rpt_cmds = task_mgr.synth_task_report_commands(task_id, design_id, irpt, tgt_lib_fpath_map)
+        rpt_no_ts = task_mgr.synth_task_report_remove_time_stamp(task_id, irpt)
+        tcl_writer.add_report(rpt_fpath, rpt_cmds, rpt_no_ts)
 
     # Decide if we should save the session after synthesis task is accomplished
     if task_mgr.synth_task_save_session(task_id):
@@ -336,6 +316,11 @@ if __name__ == "__main__":
         help="The root directory to search pdk, netlists etc. which are required by the task",
     )
     parser.add_argument(
+        "--tool_config",
+        required=True,
+        help="The tool configuration for available synthesis tools and their arguments",
+    )
+    parser.add_argument(
         "--pdk_config",
         required=True,
         help="The PDK configuration for a PDK. Once defined, the pdk setting in your task configuration will be overwritten except the corner selection.",
@@ -348,7 +333,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--parse_report_only",
         action="store_true",
-        help="Only parse the reports and generate a report summary, skip file generation and running DC",
+        help="Only parse the reports and generate a report summary, skip file generation and running synthesis",
     )
     parser.add_argument(
         "--tasks",
@@ -357,7 +342,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--qsyn_rundir",
-        default="_snps_qsyn",
+        default="_qsyn",
         help="The runtime directory to execute synthesis task",
     )
 
@@ -380,10 +365,14 @@ if __name__ == "__main__":
     task_mgr = qsyn_task_manager.QsynTaskManager()
     task_mgr.load(args.config)
 
+    # Read tool configuration
+    tool_mgr = qsyn_tool_manager.QsynToolManager()
+    tool_mgr.load(args.tool_config)
+
     # Read device data based on the selection in task configuration
     device_mgr = qsyn_device_manager.QsynDeviceManager()
     logging.info("Loading the PDK settings provided by users")
-    device_mgr.load(args.custom_pdk)
+    device_mgr.load(args.pdk_config)
 
     # Load mux modules if provided
     mux_module_mgr = mux_module_manager.MuxModuleManager()
@@ -410,19 +399,17 @@ if __name__ == "__main__":
         if not curr_task_selected:
             continue
         for curr_design_id in task_mgr.synth_task_current_designs(synth_task_id):
-            job_name = (
-                task_mgr.synth_task_name(synth_task_id)
-                + "_"
-                + task_mgr.synth_task_current_design(synth_task_id, curr_design_id)
-            )
+            curr_design_name = task_mgr.synth_task_current_design(synth_task_id, curr_design_id)
+            job_name = task_mgr.synth_task_name(synth_task_id) + "_" + curr_design_name
             job_mgr.create_job(job_name, mode)
-            dc_job_rundir = job_mgr.dc_rundir(job_name)
+            qsyn_job_rundir = job_mgr.qsyn_rundir(job_name)
             # Generate tcl script to run PTPX
-            tcl_fname = generate_dc_tcl_filename(dc_job_rundir)
+            tcl_fname = generate_qsyn_tcl_filename(qsyn_job_rundir)
+            curr_syn_tool = task_mgr.synth_task_compile_tool(synth_task_id)
             if not args.parse_report_only:
-                num_errors += generate_dc_tcl_file(
+                num_errors += generate_qsyn_tcl_file(
                     tcl_fname,
-                    use_custom_pdk,
+                    curr_syn_tool,
                     task_mgr,
                     device_mgr,
                     synth_task_id,
@@ -431,46 +418,49 @@ if __name__ == "__main__":
                     config_mem_mgr,
                 )
             job_mgr.set_tcl_script(job_name, tcl_fname)
-            if task_mgr.synth_task_report_area(synth_task_id):
-                curr_area_rpt_file = task_mgr.synth_task_report_area_file(
-                    synth_task_id, curr_design_id
+            # Config the tool, binary and args for the current job
+            cust_args = {}
+            cust_args[qsyn_tool_manager.TCL_KEYWORD] = [str(os.path.abspath(tcl_fname))]
+            curr_tool = task_mgr.synth_task_compile_tool(synth_task_id)
+            curr_tool_bin = tool_mgr.binary_path(curr_tool)
+            curr_tool_args = tool_mgr.tool_args(curr_tool, cust_args)
+            job_mgr.set_tool(job_name, curr_tool, curr_tool_bin, curr_tool_args)
+            for curr_rpt_id in task_mgr.synth_task_reports(synth_task_id):
+                curr_rpt_file = task_mgr.synth_task_report_path(
+                    synth_task_id, curr_design_id, curr_rpt_id
                 )
-                rpt_dir.append(curr_area_rpt_file)
-                rpt_mgr.add_area_report_file(
-                    curr_area_rpt_file,
-                    task_mgr.synth_task_current_design(synth_task_id, curr_design_id),
-                )
-            if task_mgr.synth_task_report_timing(synth_task_id):
-                rpt_dir.append(
-                    task_mgr.synth_task_report_timing_file(synth_task_id, curr_design_id)
-                )
-            if task_mgr.synth_task_report_power(synth_task_id):
-                rpt_dir.append(task_mgr.synth_task_report_power_file(synth_task_id, curr_design_id))
+                rpt_dir.append(curr_rpt_file)
+                if "area_report" == task_mgr.synth_task_report_type(synth_task_id, curr_rpt_id):
+                    rpt_mgr.add_area_report_file(
+                        curr_rpt_file,
+                        curr_design_name,
+                        curr_tool,
+                    )
 
-    # Run DC and check errors
+    # Run synthesis and check errors
     if args.file_generation_only or args.parse_report_only:
-        logging.info("User selects to skip running DC.")
+        logging.info("User selects to skip running synthesis.")
     else:
         # Create report directories so that primetime do not stop on the error
         for rdir in rpt_dir:
             os.makedirs(os.path.dirname(rdir), exist_ok=True)
-        job_mgr.run_dc_all(args.jobs, True)
+        job_mgr.run_synth_all(args.jobs, True)
         num_errors += job_mgr.num_errors()
         if num_errors:
-            logging.info(f"DC job finished with {num_errors} errors")
+            logging.info(f"Synthesis job finished with {num_errors} errors")
         else:
-            logging.info(f"DC job finished successfully")
+            logging.info(f"Synthesis job finished successfully")
 
     if args.parse_report_only:
-        # Read DC reports and generate final report
-        logging.info(f"Generating DC report summary...")
+        # Read reports and generate final report
+        logging.info(f"Generating Qsyn report summary...")
         rpt_mgr.write_report_summary(args.report_summary)
         logging.info(f"Done")
 
     end_time = time.time()
     time_diff = timedelta(seconds=(end_time - start_time))
 
-    time_str = "Running Design Compiler flow took " + str(time_diff)
+    time_str = "Running synthesis flow took " + str(time_diff)
     logging.info(time_str)
 
     if num_errors == 0:

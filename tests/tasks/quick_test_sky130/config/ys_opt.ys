@@ -1,0 +1,12 @@
+# 3. High-level synthesis and optimization
+proc
+opt
+fsm
+opt
+memory
+opt
+
+# 4. Map to internal Yosys cell library
+techmap
+opt
+

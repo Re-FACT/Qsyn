@@ -3,6 +3,7 @@ import yaml
 import os
 from xml.dom import minidom
 
+
 # Class of a Design Compiler device manager
 class QsynDeviceManager:
     def __init__(self):

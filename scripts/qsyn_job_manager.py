@@ -9,9 +9,7 @@ from datetime import datetime
 import threading
 
 # Constants
-DC_EXEC = "dc_shell"
-DC_EXEC_TOPO = "dc_shell -topo"
-DC_LOG_FILE = "dc_run.log"
+QSYN_LOG_FILE = "qsyn_run.log"
 SPACE_LIMIT = 80  # Maximum space tuned for the screen width
 
 
@@ -20,18 +18,26 @@ class QsynJobManager:
     def __init__(self):
         # Internal data
         self.__new_thread_wait_time_ = 1  # [sec.] Give a wait time before starting the next thread. Avoid any conflicts in switching directories
-        self.__dc_rundir_prefix_ = "_snps_dc"
+        self.__rundir_prefix_ = "_qsyn"
         self.__job_names_ = []
         self.__job_names_mode_map = {}
+        self.__job_tool_names_ = []
+        self.__job_tool_bins_ = []
+        self.__job_tool_args_ = []
         self.__tcl_scripts_ = []
         self.__rundirs_ = (
             []
         )  # Directory when DC is actually called. All the intermediate files will be kept there
         self.__error_counts_ = []  # Flag it DC run is successfully or not
+        # Constants
+        # TODO: Loaded from a method? Avoid duplicated definition in qsyn_tcl_writer.py
+        self.__SNPS_DC_TOOL_NAME_ = "snps_dc"
+        self.__YOSYS_TOOL_NAME_ = "yosys"
+        self.__SUPPORTED_TOOLS_ = [self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_]
 
     # Set default runtime directory name
     def set_runtime_dir_prefix(self, val):
-        self.__dc_rundir_prefix_ = val
+        self.__rundir_prefix_ = val
 
     # Create a new job
     def create_job(self, job_name, mode):
@@ -42,14 +48,17 @@ class QsynJobManager:
         self.__job_names_.append(job_name)
         self.__job_names_mode_map[job_name] = mode
         # Give a default empty script
+        self.__job_tool_names_.append("")
+        self.__job_tool_bins_.append("")
+        self.__job_tool_args_.append("")
         self.__tcl_scripts_.append("")
         # Set a default value
-        self.__rundirs_.append(self.__dc_rundir_prefix_ + "_" + job_name)
+        self.__rundirs_.append(self.__rundir_prefix_ + "_" + job_name)
         # Clear error count
         self.__error_counts_.append(0)
 
     # Get the runtime directory for a given job
-    def dc_rundir(self, job_name):
+    def qsyn_rundir(self, job_name):
         if job_name not in self.__job_names_:
             raise Exception("Intend to access/mutate a job which has not been created!")
         job_idx = self.__job_names_.index(job_name)
@@ -62,6 +71,19 @@ class QsynJobManager:
         job_idx = self.__job_names_.index(job_name)
         self.__tcl_scripts_[job_idx] = val
 
+    def set_tool(self, job_name, tool_name, tool_bin, tool_args):
+        if job_name not in self.__job_names_:
+            raise Exception("Intend to access/mutate a job which has not been created!")
+        job_idx = self.__job_names_.index(job_name)
+        # Should have a valid name
+        if tool_name not in self.__SUPPORTED_TOOLS_:
+            raise Exception(
+                f"Invalid tool name '{tool_name}'. Expect one of the following: {self.__SUPPORTED_TOOLS_}"
+            )
+        self.__job_tool_names_[job_idx] = tool_name
+        self.__job_tool_bins_[job_idx] = tool_bin
+        self.__job_tool_args_[job_idx] = tool_args
+
     # Set the runtime directory to execute DC job
     def set_runtime_dir(self, job_name, val):
         if job_name not in self.__job_names_:
@@ -70,7 +92,7 @@ class QsynJobManager:
         self.__rundirs_[job_idx] = val
 
     # Run a DC job with a given job name
-    def __thread_run_dc(
+    def __thread_run_synth(
         self, thread_sema, job_name, check_log, job_status, job_time, curr_dir, mode
     ):
         if job_name not in self.__job_names_:
@@ -98,23 +120,14 @@ class QsynJobManager:
             # Change to the runtime directory
             os.chdir(os.path.join(curr_dir, self.__rundirs_[job_idx]))
             logging.debug(f"Changed to directory: {self.__rundirs_[job_idx]}")
-            # Run DC
-            if mode == "topo":
-                run_cmd = (
-                    DC_EXEC_TOPO
-                    + " -f "
-                    + os.path.abspath(self.__tcl_scripts_[job_idx])
-                    + " > "
-                    + DC_LOG_FILE
-                )
-            else:
-                run_cmd = (
-                    DC_EXEC
-                    + " -f "
-                    + os.path.abspath(self.__tcl_scripts_[job_idx])
-                    + " > "
-                    + DC_LOG_FILE
-                )
+            # Run synthesis
+            run_cmd = (
+                self.__job_tool_bins_[job_idx]
+                + self.__job_tool_args_[job_idx]
+                + " > "
+                + QSYN_LOG_FILE
+            )
+            logging.info(f"Run command:\n\t{run_cmd}\n")
             # Current, we have to disable checks because PrimeTime has issues when loading library compilers
             subprocess.run(run_cmd, shell=True, check=False)
             # Restore
@@ -123,30 +136,72 @@ class QsynJobManager:
             end_time = time.time()
             job_time[job_name] = timedelta(seconds=(end_time - start_time))
 
-            time_str = "Running DC job '" + job_name + "' took " + str(job_time[job_name])
+            time_str = "Running synth job '" + job_name + "' took " + str(job_time[job_name])
             end_time_str = datetime.fromtimestamp(end_time).isoformat()
             logging.info(job_name + " ends  at" + time_logging_space + end_time_str)
 
             # check log
             if check_log:
-                job_status[job_name] += self.parse_dc_log(job_name)
+                # tool name has been validated when set_tool() is called. No need to double check here
+                if self.__job_tool_names_[job_idx] == self.__SNPS_DC_TOOL_NAME_:
+                    job_status[job_name] += self.parse_snps_dc_log(job_name)
+                if self.__job_tool_names_[job_idx] == self.__YOSYS_TOOL_NAME_:
+                    job_status[job_name] += self.parse_yosys_log(job_name)
 
             return job_status
 
-    # Check a DC log, count the number errors found
-    def parse_dc_log(self, job_name):
+    # Check a design copmiler log, count the number errors found
+    def parse_yosys_log(self, job_name):
         num_errors = 0
         if job_name not in self.__job_names_:
             raise Exception("Intend to access/mutate a job which has not been created!")
         job_idx = self.__job_names_.index(job_name)
         # Log runtime
         start_time = time.time()
-        log_path = os.path.join(self.__rundirs_[job_idx], DC_LOG_FILE)
+        log_path = os.path.join(self.__rundirs_[job_idx], QSYN_LOG_FILE)
         log_abspath = os.path.abspath(log_path)
         # Check if the tcl script is valid
         if not os.path.isfile(log_abspath):
-            raise Exception(f"Expect DC run log file at '{log_abspath}' but not found!")
-        logging.info(f"Checking DC log file '{log_abspath}'...")
+            raise Exception(f"Expect synthesis run log file at '{log_abspath}' but not found!")
+        logging.info(f"Checking synthesis log file '{log_abspath}'...")
+
+        with open(log_abspath, "r") as logf:
+            log_lines = logf.readlines()
+            for line_num, curr_line in enumerate(log_lines):
+                is_err = False
+                if re.search("Error", curr_line):
+                    is_err = True
+                elif re.search("error", curr_line):
+                    is_err = True
+                elif re.search("ERROR", curr_line):
+                    is_err = True
+                if is_err:
+                    logging.error("Synthesis run error [LINE" + str(line_num) + "]: ")
+                    logging.error(curr_line)
+                    num_errors += 1
+
+        end_time = time.time()
+        time_diff = timedelta(seconds=(end_time - start_time))
+
+        time_str = "Checking synthesis log file took " + str(time_diff)
+        logging.info(time_str)
+
+        return num_errors
+
+    # Check a design copmiler log, count the number errors found
+    def parse_snps_dc_log(self, job_name):
+        num_errors = 0
+        if job_name not in self.__job_names_:
+            raise Exception("Intend to access/mutate a job which has not been created!")
+        job_idx = self.__job_names_.index(job_name)
+        # Log runtime
+        start_time = time.time()
+        log_path = os.path.join(self.__rundirs_[job_idx], QSYN_LOG_FILE)
+        log_abspath = os.path.abspath(log_path)
+        # Check if the tcl script is valid
+        if not os.path.isfile(log_abspath):
+            raise Exception(f"Expect synthesis run log file at '{log_abspath}' but not found!")
+        logging.info(f"Checking synthesis log file '{log_abspath}'...")
 
         with open(log_abspath, "r") as logf:
             log_lines = logf.readlines()
@@ -162,20 +217,20 @@ class QsynJobManager:
                 elif re.search("error", curr_line):
                     is_err = True
                 if is_err:
-                    # logging("DC run error [LINE" + str(line_num) + "]: ")
-                    print(curr_line)
+                    logging.error("Synthesis run error [LINE" + str(line_num) + "]: ")
+                    logging.error(curr_line)
                     num_errors += 1
 
         end_time = time.time()
         time_diff = timedelta(seconds=(end_time - start_time))
 
-        time_str = "Checking DC log file took " + str(time_diff)
+        time_str = "Checking synthesis log file took " + str(time_diff)
         logging.info(time_str)
 
         return num_errors
 
-    # Run all DC jobs with a given maximum number of jobs in parrallel
-    def run_dc_all(self, max_num_jobs, check_log):
+    # Run all synthesis jobs with a given maximum number of jobs in parrallel
+    def run_synth_all(self, max_num_jobs, check_log):
         # Create thread pool
         thread_sema = threading.BoundedSemaphore(value=max_num_jobs)
         thread_list = []
@@ -188,7 +243,7 @@ class QsynJobManager:
         for key in self.__job_names_:
             mode = self.__job_names_mode_map[key]
             curr_thread = threading.Thread(
-                target=self.__thread_run_dc,
+                target=self.__thread_run_synth,
                 args=(thread_sema, key, check_log, job_status, job_time, curr_dir, mode),
             )
             curr_thread.start()
