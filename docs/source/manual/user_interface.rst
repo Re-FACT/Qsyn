@@ -24,9 +24,13 @@ A short version of command-line options can be shown by calling the help desk th
 
   Specify the root directory to search PDK files, netlist files etc., which are required by the task
 
+.. option:: --tool_config <string>
+
+  Specify the path to a tool configuration file for available synthesis tools and their arguments
+
 .. option:: --pdk_config <string>
 
-  Specify the path to a PDK setting file which is not built-in. Once defined, the PDK settings in the task configuration file will be overwritten, except the corner selection.
+  Specify the path to a PDK setting file. Once defined, the pdk setting in your task configuration will be overwritten  except the corner selection. 
 
 .. option:: --report_summary <string>
 
