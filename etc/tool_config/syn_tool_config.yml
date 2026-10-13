@@ -6,7 +6,6 @@
 #   yosys run.tcl -l run.log
 # Where in the task configuration file,
 #   - the '[tcl]' is defined through the syntax 'tcl' 
-#   - the '[max_cores]' is defined through the syntax 'max_cores'
 yosys:
   bin: yosys
   options: "kargs"

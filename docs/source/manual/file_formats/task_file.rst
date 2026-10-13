@@ -9,7 +9,7 @@ Task File (.yaml)
 
 An example of file designed for synthesis tasks is shown as follows.
 
-.. literalinclude:: example_dc_task.yaml
+.. literalinclude:: example_qsyn_task.yaml
   :language: yaml
 
 

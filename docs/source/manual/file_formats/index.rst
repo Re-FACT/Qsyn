@@ -1,7 +1,7 @@
 File Formats
 ------------
 
-DC Utility Script widely uses YAML and XML formats for interchangable files
+Qsyn widely uses YAML and XML formats for interchangable files
 
 
 .. _file_formats:
