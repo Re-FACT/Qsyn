@@ -5,7 +5,7 @@ PDK Config File (.xml)
 
 The pdk config file contains detailed PDK-related information which can be used in a synthesis task (See details in :ref:`file_format_task_file`)
 
-.. literalinclude:: example_pdk_config.yaml
+.. literalinclude:: example_pdk_config.xml
   :language: yaml
 
 General Syntax
