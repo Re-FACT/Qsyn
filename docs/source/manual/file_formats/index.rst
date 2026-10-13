@@ -1,7 +1,7 @@
 File Formats
 ------------
 
-DC Utility Script widely uses YAML format for interchangable files
+DC Utility Script widely uses YAML and XML formats for interchangable files
 
 
 .. _file_formats:
@@ -11,6 +11,10 @@ DC Utility Script widely uses YAML format for interchangable files
    :maxdepth: 2
 
    task_file
+
+   pdk_config_file
+
+   tool_config_file
 
    mux_module_file
 
