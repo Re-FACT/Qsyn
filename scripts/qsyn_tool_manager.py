@@ -14,6 +14,7 @@ KARGS_NAME_TAG = "name"
 # Keywords
 TCL_KEYWORD = "[tcl]"
 
+
 # Class of a tool manager
 class QsynToolManager:
     def __init__(self):

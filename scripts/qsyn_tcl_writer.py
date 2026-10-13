@@ -18,10 +18,8 @@ GET_LIB_CELLS = "get_lib_cells"
 # Support tools
 TOOL_SNPS_DC = "snps_dc"
 TOOL_YOSYS = "yosys"
-SUPPORTED_TOOLS = [
-  TOOL_YOSYS,
-  TOOL_SNPS_DC
-]
+SUPPORTED_TOOLS = [TOOL_YOSYS, TOOL_SNPS_DC]
+
 
 # Class of A general purpose Design Compiler Tcl writer
 class QsynTclWriter:
@@ -47,7 +45,7 @@ class QsynTclWriter:
         self.__opt_recipe_ = {}
         self.__subblock_opt_recipe_ = {}
         self.__session_name_ = ""
-        self.__report_fpaths_ = [] # A list of report settings: [i] = [fpath, cmds, no_ts]]
+        self.__report_fpaths_ = []  # A list of report settings: [i] = [fpath, cmds, no_ts]]
         self.__report_cmds_ = []
         self.__report_no_time_stamps_ = []
         self.__write_design_file_ = ""
@@ -78,7 +76,9 @@ class QsynTclWriter:
 
     def __check_valid_tool(self):
         if self.__tool_ not in SUPPORTED_TOOLS:
-            raise Exception(f"Synthesis tool '{self.__tool_}' is not in the list of supported tools.\nExpect: {SUPPORTED_TOOLS}\n")
+            raise Exception(
+                f"Synthesis tool '{self.__tool_}' is not in the list of supported tools.\nExpect: {SUPPORTED_TOOLS}\n"
+            )
 
     # Set the synthesis tool
     def set_tool(self, val):
@@ -311,7 +311,7 @@ class QsynTclWriter:
         append_rpt = False
         for cmd in cmds:
             tee_opt = "-o"
-            if not append_rpt: 
+            if not append_rpt:
                 tee_opt = "-a"
                 append_rpt = True
             fp.write(f"tee {tee_opt} {rptf} {cmd}\n")
@@ -346,7 +346,7 @@ class QsynTclWriter:
         self.__write_setvar_line(fp, CMD_LINK_PATH, '"' + link_path_val + '"')
 
     def __write_custom_recipe(self, fp, src_recipe_file):
-        with open(src_recipe_file, 'r') as infile:
+        with open(src_recipe_file, "r") as infile:
             # Loop through each line in the source file
             for line in infile:
                 # Optional: Modify or filter the line here if needed
@@ -372,7 +372,9 @@ class QsynTclWriter:
 
     def __yosys_write_techmap(self, fp):
         if len(self.__target_libs_) > 1:
-            raise Exception(f"{TOOL_YOSYS} only supports single file as target technology library\n")
+            raise Exception(
+                f"{TOOL_YOSYS} only supports single file as target technology library\n"
+            )
         if len(self.__target_libs_) == 0:
             raise Exception(f"{TOOL_YOSYS} require 1 target technology library but found 0\n")
         for var in self.__target_libs_:
@@ -574,9 +576,7 @@ class QsynTclWriter:
             # Run tech map on target libs
             self.__write_comment_line(o_tcl_f, "Technology mapping")
             if self.__write_design_file_:
-                self.__yosys_write_techmap(
-                    o_tcl_f
-                )
+                self.__yosys_write_techmap(o_tcl_f)
             # Write synthesized netlists
             self.__write_comment_line(o_tcl_f, "Write synthesized HDL design")
             if self.__write_design_file_:
@@ -594,7 +594,6 @@ class QsynTclWriter:
                     self.__report_cmds_[irpt],
                     self.__report_no_time_stamps_[irpt],
                 )
-
 
     # Write content to a file
     def write(self, fname):

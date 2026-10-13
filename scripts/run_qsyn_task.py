@@ -56,6 +56,7 @@ def find_current_task_is_selected(curr_task_name, task_names):
 def generate_qsyn_tcl_filename(tcldir):
     return os.path.join(os.path.abspath(tcldir), QSYN_TCL_FNAME)
 
+
 #####################################################################
 # Generate the common parts of tcl script for a synthesis task which can fit multiple purpose:
 # - load design
@@ -217,7 +218,7 @@ def generate_qsyn_tcl_file(
             subset = " ".join(subset_path)
             tcl_writer.get_subblocks_target_library_subset(subset)
         sdc_files = task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task])
-        if sdc_files: 
+        if sdc_files:
             sdc_file = sdc_files[0]
             if sdc_file:
                 tcl_writer.set_subblocks_sdc(True)
@@ -226,11 +227,15 @@ def generate_qsyn_tcl_file(
         # print("sdc_file*****************",task_mgr.synth_task_subblocks_sdc(task_id, name_to_idx[subblock_task]))
         # for sdc_f in task_mgr.synth_task_subblocks_sdc(task_id,name_to_idx[subblock_task]):
         #     tcl_writer.add_subblock_sdc(sdc_f)
-        req_compile = task_mgr.synth_task_subblocks_require_compile(task_id, name_to_idx[subblock_task])
+        req_compile = task_mgr.synth_task_subblocks_require_compile(
+            task_id, name_to_idx[subblock_task]
+        )
         tcl_writer.set_subblocks_compile(subblock_task, req_compile)
         if req_compile:
             tcl_writer.set_subblock_optimization_recipe(
-                task_mgr.synth_task_subblocks_optimization_recipe(task_id, name_to_idx[subblock_task])
+                task_mgr.synth_task_subblocks_optimization_recipe(
+                    task_id, name_to_idx[subblock_task]
+                )
             )
         if task_mgr.synth_task_subblocks_rename_prefix(task_id, name_to_idx[subblock_task]):
             tcl_writer.set_subblock_rename_prefix(True)
@@ -395,11 +400,7 @@ if __name__ == "__main__":
             continue
         for curr_design_id in task_mgr.synth_task_current_designs(synth_task_id):
             curr_design_name = task_mgr.synth_task_current_design(synth_task_id, curr_design_id)
-            job_name = (
-                task_mgr.synth_task_name(synth_task_id)
-                + "_"
-                + curr_design_name
-            )
+            job_name = task_mgr.synth_task_name(synth_task_id) + "_" + curr_design_name
             job_mgr.create_job(job_name, mode)
             qsyn_job_rundir = job_mgr.qsyn_rundir(job_name)
             # Generate tcl script to run PTPX

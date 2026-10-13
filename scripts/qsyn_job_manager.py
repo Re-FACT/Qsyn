@@ -33,7 +33,7 @@ class QsynJobManager:
         # TODO: Loaded from a method? Avoid duplicated definition in qsyn_tcl_writer.py
         self.__SNPS_DC_TOOL_NAME_ = "snps_dc"
         self.__YOSYS_TOOL_NAME_ = "yosys"
-        self.__SUPPORTED_TOOLS_ = [ self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_ ]
+        self.__SUPPORTED_TOOLS_ = [self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_]
 
     # Set default runtime directory name
     def set_runtime_dir_prefix(self, val):
@@ -77,7 +77,9 @@ class QsynJobManager:
         job_idx = self.__job_names_.index(job_name)
         # Should have a valid name
         if tool_name not in self.__SUPPORTED_TOOLS_:
-            raise Exception(f"Invalid tool name '{tool_name}'. Expect one of the following: {self.__SUPPORTED_TOOLS_}")
+            raise Exception(
+                f"Invalid tool name '{tool_name}'. Expect one of the following: {self.__SUPPORTED_TOOLS_}"
+            )
         self.__job_tool_names_[job_idx] = tool_name
         self.__job_tool_bins_[job_idx] = tool_bin
         self.__job_tool_args_[job_idx] = tool_args

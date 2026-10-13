@@ -205,10 +205,20 @@ class QsynTaskManager:
     # Get subblocks compile from yaml file
     def synth_task_subblocks_require_compile(self, task_idx, subblocks_idx):
         self.__check_valid()
-        if TASKS_SUBBLOCKS_COMPILE_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx]:
-            raise Exception(f"Required syntax '{TASKS_SUBBLOCKS_COMPILE_TAG}' not defined under subblock '{self.synth_task_subblocks_name(task_idx, subblocks_idx)}' of task '{self.synth_task_name(task_idx)}'")
+        if (
+            TASKS_SUBBLOCKS_COMPILE_TAG
+            not in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx]
+        ):
+            raise Exception(
+                f"Required syntax '{TASKS_SUBBLOCKS_COMPILE_TAG}' not defined under subblock '{self.synth_task_subblocks_name(task_idx, subblocks_idx)}' of task '{self.synth_task_name(task_idx)}'"
+            )
 
-        return TASKS_SUBBLOCKS_COMPILE_TOOL_TAG in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx][TASKS_SUBBLOCKS_COMPILE_TAG]
+        return (
+            TASKS_SUBBLOCKS_COMPILE_TOOL_TAG
+            in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx][
+                TASKS_SUBBLOCKS_COMPILE_TAG
+            ]
+        )
 
     # Get subblocks compile optimize from yaml file
     def synth_task_subblocks_optimization_recipe(self, task_idx, subblocks_idx):
@@ -220,7 +230,10 @@ class QsynTaskManager:
     # Get subblocks compile effort from yaml file
     def synth_task_subblocks_target_library_option(self, task_idx, subblocks_idx):
         self.__check_valid()
-        if TASKS_SUBBLOCKS_TARGET_LIBRARY_OPTION_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx]:
+        if (
+            TASKS_SUBBLOCKS_TARGET_LIBRARY_OPTION_TAG
+            not in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx]
+        ):
             return ""
         return self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx][
             TASKS_SUBBLOCKS_TARGET_LIBRARY_OPTION_TAG
@@ -229,7 +242,10 @@ class QsynTaskManager:
     # Get subblocks compile effort from yaml file
     def synth_task_subblocks_target_library_subset(self, task_idx, subblocks_idx):
         self.__check_valid()
-        if TASKS_SUBBLOCKS_TARGET_LIBRARY_SUBSET_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx]:
+        if (
+            TASKS_SUBBLOCKS_TARGET_LIBRARY_SUBSET_TAG
+            not in self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx]
+        ):
             return ""
         return self.__db_[TASKS_TAG][task_idx][TASKS_SUBBLOCKS_TAG][subblocks_idx][
             TASKS_SUBBLOCKS_TARGET_LIBRARY_SUBSET_TAG
@@ -292,28 +308,40 @@ class QsynTaskManager:
     def synth_task_require_compile(self, task_idx):
         self.__check_valid()
         if TASKS_COMPILE_TAG not in self.__db_[TASKS_TAG][task_idx]:
-            raise Exception(f"Required syntax '{TASKS_COMPILE_TAG}' not defined under task '{self.synth_task_name(task_idx)}'")
+            raise Exception(
+                f"Required syntax '{TASKS_COMPILE_TAG}' not defined under task '{self.synth_task_name(task_idx)}'"
+            )
         return TASKS_COMPILE_OPT_TAG in self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG]
 
     def synth_task_compile_tool(self, task_idx):
         self.__check_valid()
         if self.synth_task_require_compile(task_idx):
             if TASKS_COMPILE_TOOL_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG]:
-                raise Exception(f"Required syntax '{TASKS_COMPILE_TOOL_TAG}' not defined under task '{self.synth_task_name(task_idx)}' which requires optimization")
+                raise Exception(
+                    f"Required syntax '{TASKS_COMPILE_TOOL_TAG}' not defined under task '{self.synth_task_name(task_idx)}' which requires optimization"
+                )
             return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_TOOL_TAG]
-        raise Exception(f"Required syntax '{TASKS_COMPILE_TAG}' not defined under task '{self.synth_task_name(task_idx)}'")
+        raise Exception(
+            f"Required syntax '{TASKS_COMPILE_TAG}' not defined under task '{self.synth_task_name(task_idx)}'"
+        )
 
     def synth_task_optimization_recipe(self, task_idx):
         self.__check_valid()
         if self.synth_task_require_compile(task_idx):
             return self.__db_[TASKS_TAG][task_idx][TASKS_COMPILE_TAG][TASKS_COMPILE_OPT_TAG]
-        raise Exception(f"Required syntax '{TASKS_COMPILE_OPT_TAG}' not defined under task '{self.synth_task_name(task_idx)}' which requires optimization")
+        raise Exception(
+            f"Required syntax '{TASKS_COMPILE_OPT_TAG}' not defined under task '{self.synth_task_name(task_idx)}' which requires optimization"
+        )
 
     def __check_target_lib_for_reserved_words(self, curr_tgt_libs):
         if len(curr_tgt_libs) == 0:
-            raise Exception(f"Invalid target libraries for synthesis task '{self.synth_task_name(task_idx)}. Expect at least 1 defined.")
+            raise Exception(
+                f"Invalid target libraries for synthesis task '{self.synth_task_name(task_idx)}. Expect at least 1 defined."
+            )
         if len(curr_tgt_libs) > 1:
-            raise Exception(f"Invalid target libraries for synthesis task '{self.synth_task_name(task_idx)}. Expect only 1 defined.")
+            raise Exception(
+                f"Invalid target libraries for synthesis task '{self.synth_task_name(task_idx)}. Expect only 1 defined."
+            )
 
     def __report_path_replace_reserved_words(self, fname, task_idx, design_idx):
         temp_fname = fname
@@ -323,7 +351,9 @@ class QsynTaskManager:
             )
         return temp_fname
 
-    def __report_cmd_replace_reserved_words(self, fname, task_idx, design_idx, rpt_idx, tgt_lib_fpath_map):
+    def __report_cmd_replace_reserved_words(
+        self, fname, task_idx, design_idx, rpt_idx, tgt_lib_fpath_map
+    ):
         temp_fname = fname
         temp_fname = temp_fname.replace(
             CURRENT_PATH_KEYWORD, self.synth_task_report_path(task_idx, design_idx, rpt_idx)
@@ -353,43 +383,74 @@ class QsynTaskManager:
     def synth_task_report_name(self, task_idx, rpt_idx):
         self.__check_valid()
         self.__valid_synth_task_report_id(task_idx, rpt_idx)
-        if (TASKS_REPORTS_NAME_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]):
-            raise Exception(f"Missing required syntax '{TASKS_REPORTS_NAME_TAG}' for reports under synthesis task '{self.synth_task_name(task_idx)}'!")
+        if (
+            TASKS_REPORTS_NAME_TAG
+            not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]
+        ):
+            raise Exception(
+                f"Missing required syntax '{TASKS_REPORTS_NAME_TAG}' for reports under synthesis task '{self.synth_task_name(task_idx)}'!"
+            )
         return self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][TASKS_REPORTS_NAME_TAG]
 
     def synth_task_report_type(self, task_idx, rpt_idx):
         self.__check_valid()
         self.__valid_synth_task_report_id(task_idx, rpt_idx)
-        if (TASKS_REPORTS_TYPE_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]):
-            raise Exception(f"Missing required syntax '{TASKS_REPORTS_PATH_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!")
+        if (
+            TASKS_REPORTS_TYPE_TAG
+            not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]
+        ):
+            raise Exception(
+                f"Missing required syntax '{TASKS_REPORTS_PATH_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!"
+            )
         return self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][TASKS_REPORTS_TYPE_TAG]
 
     def synth_task_report_path(self, task_idx, design_idx, rpt_idx):
         self.__check_valid()
         self.__valid_synth_task_report_id(task_idx, rpt_idx)
-        if (TASKS_REPORTS_PATH_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]):
-            raise Exception(f"Missing required syntax '{TASKS_REPORTS_PATH_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!")
-        fname = os.path.join(os.getcwd(), self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][TASKS_REPORTS_PATH_TAG])
+        if (
+            TASKS_REPORTS_PATH_TAG
+            not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]
+        ):
+            raise Exception(
+                f"Missing required syntax '{TASKS_REPORTS_PATH_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!"
+            )
+        fname = os.path.join(
+            os.getcwd(),
+            self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][TASKS_REPORTS_PATH_TAG],
+        )
         return self.__report_path_replace_reserved_words(fname, task_idx, design_idx)
 
     def synth_task_report_commands(self, task_idx, design_idx, rpt_idx, tgt_lib_fpath_map):
         self.__check_valid()
         self.__valid_synth_task_report_id(task_idx, rpt_idx)
-        if (TASKS_REPORTS_CMD_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]):
-            raise Exception(f"Missing required syntax '{TASKS_REPORTS_CMD_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!")
-        orig_cmds = self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][TASKS_REPORTS_CMD_TAG]
+        if TASKS_REPORTS_CMD_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]:
+            raise Exception(
+                f"Missing required syntax '{TASKS_REPORTS_CMD_TAG}' for report name '{self.synth_task_report_name(task_idx, rpt_idx)}' for synthesis task '{self.synth_task_name(task_idx)}'!"
+            )
+        orig_cmds = self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][
+            TASKS_REPORTS_CMD_TAG
+        ]
         final_cmds = []
         for orig_cmd in orig_cmds:
             # Actual target lib file name should come from the device data manager
-            final_cmds.append(self.__report_cmd_replace_reserved_words(orig_cmd, task_idx, design_idx, rpt_idx, tgt_lib_fpath_map))
+            final_cmds.append(
+                self.__report_cmd_replace_reserved_words(
+                    orig_cmd, task_idx, design_idx, rpt_idx, tgt_lib_fpath_map
+                )
+            )
         return final_cmds
 
     def synth_task_report_remove_time_stamp(self, task_idx, rpt_idx):
         self.__check_valid()
         self.__valid_synth_task_report_id(task_idx, rpt_idx)
-        if (TASKS_REPORTS_REMOVETIMESTAMP_TAG not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]):
+        if (
+            TASKS_REPORTS_REMOVETIMESTAMP_TAG
+            not in self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx]
+        ):
             return False
-        return self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][TASKS_REPORTS_REMOVETIMESTAMP_TAG]
+        return self.__db_[TASKS_TAG][task_idx][TASKS_REPORTS_TAG][rpt_idx][
+            TASKS_REPORTS_REMOVETIMESTAMP_TAG
+        ]
 
     # Internal method to check if data is valid, throw exeception when invalid. Useful for accessors
     def __check_valid(self):

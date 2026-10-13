@@ -12,16 +12,17 @@ AREA_TAGS = [TOTAL_CELL_AREA_TAG, NUM_CELLS_TAG]
 SNPS_DC_TOTAL_CELL_AREA_TAG = "Total cell area:"
 SNPS_DC_NUM_CELLS_TAG = "Number of cells:"
 SNPS_DC_AREA_TAGS = {
-  TOTAL_CELL_AREA_TAG: SNPS_DC_TOTAL_CELL_AREA_TAG,
-  NUM_CELLS_TAG : SNPS_DC_NUM_CELLS_TAG,
+    TOTAL_CELL_AREA_TAG: SNPS_DC_TOTAL_CELL_AREA_TAG,
+    NUM_CELLS_TAG: SNPS_DC_NUM_CELLS_TAG,
 }
 # Constants for yosys-style reports
 YOSYS_TOTAL_CELL_AREA_TAG = "area"
 YOSYS_NUM_CELLS_TAG = "num_cells"
 YOSYS_AREA_TAGS = {
-  TOTAL_CELL_AREA_TAG : YOSYS_TOTAL_CELL_AREA_TAG,
-  NUM_CELLS_TAG : YOSYS_NUM_CELLS_TAG,
+    TOTAL_CELL_AREA_TAG: YOSYS_TOTAL_CELL_AREA_TAG,
+    NUM_CELLS_TAG: YOSYS_NUM_CELLS_TAG,
 }
+
 
 # Class of a DC report manager
 class QsynReportManager:
@@ -38,12 +39,14 @@ class QsynReportManager:
         # TODO: Loaded from a method? Avoid duplicated definition in qsyn_tcl_writer.py
         self.__SNPS_DC_TOOL_NAME_ = "snps_dc"
         self.__YOSYS_TOOL_NAME_ = "yosys"
-        self.__SUPPORTED_TOOLS_ = [ self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_ ]
+        self.__SUPPORTED_TOOLS_ = [self.__SNPS_DC_TOOL_NAME_, self.__YOSYS_TOOL_NAME_]
 
     def add_area_report_file(self, val, design_name, tool_name):
         # Should have a valid name
         if tool_name not in self.__SUPPORTED_TOOLS_:
-            raise Exception(f"Invalid tool name '{tool_name}'. Expect one of the following: {self.__SUPPORTED_TOOLS_}")
+            raise Exception(
+                f"Invalid tool name '{tool_name}'. Expect one of the following: {self.__SUPPORTED_TOOLS_}"
+            )
         if design_name in self.__syn_design_names_:
             design_idx = self.__syn_design_names_.index(design_name)
             self.__syn_area_report_files_[design_idx] = val
@@ -58,9 +61,9 @@ class QsynReportManager:
     # Parses a Yosys JSON file and extracts the 'area' value from the 'design' section.
     def __parse_yosys_area_report(self, rpt_file, design_name):
         try:
-            with open(rpt_file, 'r') as jfile:
+            with open(rpt_file, "r") as jfile:
                 data: Dict[str, Any] = json.load(jfile)
-                
+
             # Safely access the design section and the area key
             raw_num_cells = data.get("design", {}).get("num_cells")
             # Assign to area
@@ -73,7 +76,9 @@ class QsynReportManager:
             print(f"Error: The file '{rpt_file}' was not found.")
             return None
         except json.JSONDecodeError:
-            print(f"Error: Failed to decode JSON from '{rpt_file}'. Check if the file format is valid.")
+            print(
+                f"Error: Failed to decode JSON from '{rpt_file}'. Check if the file format is valid."
+            )
             return None
 
     # Parse an area report: extract data by matching the metric names
@@ -98,9 +103,9 @@ class QsynReportManager:
         for design_idx in range(len(self.__syn_design_names_)):
             rpt_fpath = self.__syn_area_report_files_[design_idx]
             syn_dsgn_name = self.__syn_design_names_[design_idx]
-            if self.__syn_tools_[design_idx] == self.__SNPS_DC_TOOL_NAME_ :
+            if self.__syn_tools_[design_idx] == self.__SNPS_DC_TOOL_NAME_:
                 self.__parse_snps_dc_area_report(rpt_fpath, syn_dsgn_name)
-            if self.__syn_tools_[design_idx] == self.__YOSYS_TOOL_NAME_ :
+            if self.__syn_tools_[design_idx] == self.__YOSYS_TOOL_NAME_:
                 self.__parse_yosys_area_report(rpt_fpath, syn_dsgn_name)
 
     # Output the parse results to a summary file
