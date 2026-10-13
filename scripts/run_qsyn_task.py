@@ -433,6 +433,7 @@ if __name__ == "__main__":
                     rpt_mgr.add_area_report_file(
                         curr_rpt_file,
                         curr_design_name,
+                        curr_tool,
                     )
 
     # Run synthesis and check errors
