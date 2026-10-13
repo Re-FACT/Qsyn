@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           cd tests/tasks/quick_test_sky130
-          make generte_script_only
+          make generate_script_only
           make clean
           make synth
           make parse_report
