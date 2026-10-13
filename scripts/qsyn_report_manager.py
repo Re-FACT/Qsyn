@@ -64,7 +64,7 @@ class QsynReportManager:
             # Safely access the design section and the area key
             raw_num_cells = data.get("design", {}).get("num_cells")
             # Assign to area
-            for curr_unified_tag, curr_ys_tag in YOSYS_AREA_TAGS:
+            for curr_unified_tag, curr_ys_tag in YOSYS_AREA_TAGS.items():
                 raw_area_data = data.get("design", {}).get(curr_ys_tag)
                 if not design_name in self.__rpt_db_:
                     self.__rpt_db_[design_name] = {}
@@ -84,7 +84,7 @@ class QsynReportManager:
                 processed_line = line.lstrip()
                 processed_line = processed_line.rstrip()
                 # Start keyword matching
-                for curr_unified_tag, curr_dc_tag in SNPS_DC_AREA_TAGS:
+                for curr_unified_tag, curr_dc_tag in SNPS_DC_AREA_TAGS.items():
                     if processed_line.startswith(curr_dc_tag):
                         data_line = processed_line.removeprefix(curr_dc_tag)
                         data_line = data_line.lstrip()
@@ -114,7 +114,7 @@ class QsynReportManager:
             # Write head lines
             spamwriter.writerow(["Design Name"] + AREA_TAGS)
             # Write data of designs one by one
-            for design_name in self.__dc_design_names_:
+            for design_name in self.__syn_design_names_:
                 row_data = [design_name]
                 for curr_tag in AREA_TAGS:
                     row_data.append(self.__rpt_db_[design_name][curr_tag])
