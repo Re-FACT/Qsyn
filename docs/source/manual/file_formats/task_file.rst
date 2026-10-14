@@ -39,7 +39,7 @@ Technology-related information should be defined under the ``technology`` sectio
   - ``bc``: best case
   - ``wc``: worst case
 
-  .. note:: The corner names are defined in the PDK configuration (See details in `:ref:file_format_pdk_config_file`). The ``tag`` in PDK configuration represents the corner name here. If a corner is selected, only the standard cell libraries under the corresponding tag will be considered in optimization and technology mapping. 
+  .. note:: The corner names are defined in the PDK configuration (See details in :ref:`file_format_pdk_config_file`). The ``tag`` in PDK configuration represents the corner name here. If a corner is selected, only the standard cell libraries under the corresponding tag will be considered in optimization and technology mapping. 
 
 Netlist-related Syntax
 ----------------------
@@ -114,7 +114,7 @@ In the ``compile`` section, specify options when compile the design using synthe
 
 .. option:: tool="<string>"
 
-  Can be a valid tool name defined in the tool configuration file (See details in `:ref:file_format_tool_config_file`). Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
+  Can be a valid tool name defined in the tool configuration file (See details in :ref:`file_format_tool_config_file`). Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
 
 .. option:: optimization_recipe="<string>"
 
@@ -128,7 +128,7 @@ In the ``compile`` section, specify options when compile the design using synthe
 
 .. option:: target_library="<string>"
 
-  Specify the target library(s) which optimization should utilize. The applicable library name depends on the technology node, which is defined in the PDK configuration (See details in `:ref:file_format_pdk_config_file`). Use the name of standard cell libary. For example, in the PDK configuration file, there are a number of standard cell libararies are defined.
+  Specify the target library(s) which optimization should utilize. The applicable library name depends on the technology node, which is defined in the PDK configuration (See details in :ref:`file_format_pdk_config_file`). Use the name of standard cell libary. For example, in the PDK configuration file, there are a number of standard cell libararies are defined.
 
 .. code-block:: xml
 
@@ -190,7 +190,7 @@ In the ``reports`` section, define the report files (each task represents a file
 
 .. option:: type="<string>"
 
-  Specify if type of the report. Could be [ ``area_report`` | ``timing_report`` | ``power_report`` ]. When the ``area_report`` is selected, the reports will be parsed and a summary report will be outputted (See details in `:ref:file_format_report_summary_file`).
+  Specify if type of the report. Could be [ ``area_report`` | ``timing_report`` | ``power_report`` ]. When the ``area_report`` is selected, the reports will be parsed and a summary report will be outputted (See details in :ref:`file_format_report_summary_file`).
 
 .. option:: path="<string>"
 
@@ -262,7 +262,7 @@ In the ``compile`` section, specify options when compile the design using synthe
 
 .. option:: tool="<string>"
 
-  Can be a valid tool name defined in the tool configuration file (See details in `:ref:file_format_tool_config_file`). Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
+  Can be a valid tool name defined in the tool configuration file (See details in :ref:`file_format_tool_config_file`). Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
 
 .. option:: optimization_recipe="<string>"
 
