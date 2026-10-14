@@ -19,3 +19,5 @@ Qsyn widely uses YAML and XML formats for interchangable files
    mux_module_file
 
    config_mem_file
+
+   report_summary_file

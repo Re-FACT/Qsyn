@@ -30,7 +30,7 @@ Technology-related information should be defined under the ``technology`` sectio
 
 .. option:: corner="<string>"
 
-  Specify the corner to be considered for process variations. Can be 
+  Specify the corner to be considered for process variations. For example: 
 
   - ``tt``: typical-typical
   - ``tt_v1p0``: typical-typical, under Vdd=1.0V, only available for S40
@@ -39,7 +39,7 @@ Technology-related information should be defined under the ``technology`` sectio
   - ``bc``: best case
   - ``wc``: worst case
 
-  .. note:: The corner names are pre-defined. It is different from the given names in PDKs. If you are not clear, please ask your manager.
+  .. note:: The corner names are defined in the PDK configuration (See details in `:ref:file_format_pdk_config_file`). The ``tag`` in PDK configuration represents the corner name here. If a corner is selected, only the standard cell libraries under the corresponding tag will be considered in optimization and technology mapping. 
 
 Netlist-related Syntax
 ----------------------
@@ -114,7 +114,7 @@ In the ``compile`` section, specify options when compile the design using synthe
 
 .. option:: tool="<string>"
 
-  Can be a valid tool name defined in the tool configuration file. Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
+  Can be a valid tool name defined in the tool configuration file (See details in `:ref:file_format_tool_config_file`). Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
 
 .. option:: optimization_recipe="<string>"
 
@@ -128,7 +128,28 @@ In the ``compile`` section, specify options when compile the design using synthe
 
 .. option:: target_library="<string>"
 
-  Specify the target library when optimization should utilize. The applicable library name depends on the technology node. Only a tag is required. For example, ``lvt``.
+  Specify the target library(s) which optimization should utilize. The applicable library name depends on the technology node, which is defined in the PDK configuration (See details in `:ref:file_format_pdk_config_file`). Use the name of standard cell libary. For example, in the PDK configuration file, there are a number of standard cell libararies are defined.
+
+.. code-block:: xml
+
+  <sclibs>
+    <sclib name="rvt">
+      <!-- standard cell lib file definition -->
+    </sclib>
+    <sclib name="lvt">
+      <!-- standard cell lib file definition -->
+    </sclib>
+    <sclib name="hvt">
+      <!-- standard cell lib file definition -->
+    </sclib>
+  </sclibs>
+
+.. code-block:: yaml
+
+  # Use the standard cell libraries from PDK configuration
+  target_library:
+    - "lvt"
+    - "hvt"
 
 .. option:: sdc: 
 
@@ -169,7 +190,7 @@ In the ``reports`` section, define the report files (each task represents a file
 
 .. option:: type="<string>"
 
-  Specify if type of the report. Could be [ ``area_report`` | ``timing_report`` | ``power_report`` ]. When the ``area_report`` is selected, the reports will be parsed and a summary report will be outputted.
+  Specify if type of the report. Could be [ ``area_report`` | ``timing_report`` | ``power_report`` ]. When the ``area_report`` is selected, the reports will be parsed and a summary report will be outputted (See details in `:ref:file_format_report_summary_file`).
 
 .. option:: path="<string>"
 
@@ -241,7 +262,7 @@ In the ``compile`` section, specify options when compile the design using synthe
 
 .. option:: tool="<string>"
 
-  Can be a valid tool name defined in the tool configuration file. Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
+  Can be a valid tool name defined in the tool configuration file (See details in `:ref:file_format_tool_config_file`). Define the tool to be used when running synthesis. Currently support Synopsys Design Compiler and Yosys.
 
 .. option:: optimization_recipe="<string>"
 
@@ -288,7 +309,7 @@ In the ``compile`` section, specify options when compile the design using synthe
 
 .. option:: rename_prefix="<bool>"
 
-    This is optional.Can be [True|False]. Specify whether to add a prefix to all the module and net names in the synthesized subblock netlist, to avoid name conflicts when integrating back to the top-level netlist. For example, ``subblock1_``.
+    This is optional. Can be [ ``true`` | ``false`` ]. Specify whether to add a prefix to all the module and net names in the synthesized subblock netlist, to avoid name conflicts when integrating back to the top-level netlist. For example, ``subblock1_``.
 
 
 .. _file_format_task_file_reserved_words:
