@@ -1,5 +1,8 @@
 # Quality synthesis framework (Qsyn) for eFPGA netlists
 
+[![Test](https://github.com/Re-FACT/Qsyn/actions/workflows/test.yml/badge.svg)](https://github.com/Re-FACT/Qsyn/actions/workflows/test.yml)
+[![Code Format](https://github.com/Re-FACT/Qsyn/actions/workflows/format.yaml/badge.svg)](https://github.com/Re-FACT/Qsyn/actions/workflows/format.yaml)
+
 Version: see [`VERSION.md`](VERSION.md)
 
 Qsyn is a python-based general-purpose eFPGA netlist synthesis framework.
@@ -18,7 +21,7 @@ Qsyn supports both commercial and open-source simulators
 
 ## Documentation
 
-Full documentatation can be found [here](https://qsyn.readthedocs-io/en/latest//)
+Full documentatation can be found [here](https://qsyn.readthedocs.io/en/latest/)
 
 ## Developer Guidelines
 

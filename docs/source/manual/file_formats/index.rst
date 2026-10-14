@@ -1,7 +1,7 @@
 File Formats
 ------------
 
-DC Utility Script widely uses YAML format for interchangable files
+Qsyn widely uses YAML and XML formats for interchangable files
 
 
 .. _file_formats:
@@ -12,6 +12,12 @@ DC Utility Script widely uses YAML format for interchangable files
 
    task_file
 
+   pdk_config_file
+
+   tool_config_file
+
    mux_module_file
 
    config_mem_file
+
+   report_summary_file
